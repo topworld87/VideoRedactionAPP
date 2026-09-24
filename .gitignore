@@ -12,6 +12,8 @@ __pycache__/
 models/_ir/
 models/face_detection_yunet_2023mar.onnx
 models/face-detection-adas-0001.onnx
+models/landmarks-regression-retail-0009.onnx
+models/face-reidentification-retail-0095.onnx
 
 # Local installers, store submission, and launchers. Not part of the public tree.
 setup/
