@@ -1,0 +1,125 @@
+cmake_minimum_required(VERSION 3.21)
+project(VideoBlackoutCore VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(APP_ROOT "${CMAKE_SOURCE_DIR}/../app")
+set(OPENCV_ROOT "${APP_ROOT}/opencv")
+set(ORT_ROOT "${APP_ROOT}/third_party/onnxruntime")
+set(OUTPUT_BIN "${CMAKE_SOURCE_DIR}/bin")
+
+foreach(cfg DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cfg} "${OUTPUT_BIN}")
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${cfg} "${OUTPUT_BIN}")
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${cfg} "${OUTPUT_BIN}")
+endforeach()
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_BIN}")
+
+add_library(VideoBlackoutCore SHARED
+  native/src/fs.cpp
+  native/src/Settings.cpp
+  native/src/RedactionFilter.cpp
+  native/src/VideoDecoder.cpp
+  native/src/VideoEncoder.cpp
+  native/src/OrtRuntime.cpp
+  native/src/FaceDetectorDnn.cpp
+  native/src/FaceLandmarks.cpp
+  native/src/FaceReId.cpp
+  native/src/IdentityGallery.cpp
+  native/src/KeepFacePolicy.cpp
+  native/src/ByteTrack.cpp
+  native/src/YoloDetectorDnn.cpp
+  native/src/CsrtTracker.cpp
+  native/src/TrackManager.cpp
+  native/src/PreviewEngine.cpp
+  native/src/ExportEngine.cpp
+  native/src/FfmpegAudioTools.cpp
+  native/src/HardwareInfo.cpp
+  native/src/HardwareLoad.cpp
+  native/src/videoblackout_c.cpp
+  native/src/platform/ChildProcess.cpp
+  native/src/platform/HwId.cpp
+)
+
+target_compile_definitions(VideoBlackoutCore PRIVATE VB_CORE_EXPORTS)
+target_include_directories(VideoBlackoutCore PUBLIC
+  "${CMAKE_SOURCE_DIR}/native/include"
+  "${OPENCV_ROOT}/include"
+  "${ORT_ROOT}/include"
+)
+
+if(MSVC)
+  target_compile_options(VideoBlackoutCore PRIVATE /utf-8 /EHsc)
+endif()
+
+set(_ocv_mods core imgproc imgcodecs video videoio dnn)
+foreach(mod ${_ocv_mods})
+  add_library(vb_opencv_${mod} SHARED IMPORTED)
+  set_target_properties(vb_opencv_${mod} PROPERTIES
+    IMPORTED_CONFIGURATIONS "DEBUG;RELEASE;RELWITHDEBINFO;MINSIZEREL"
+    IMPORTED_IMPLIB_RELEASE "${OPENCV_ROOT}/lib/Release/opencv_${mod}4100.lib"
+    IMPORTED_LOCATION_RELEASE "${OPENCV_ROOT}/bin/Release/opencv_${mod}4100.dll"
+    IMPORTED_IMPLIB_RELWITHDEBINFO "${OPENCV_ROOT}/lib/Release/opencv_${mod}4100.lib"
+    IMPORTED_LOCATION_RELWITHDEBINFO "${OPENCV_ROOT}/bin/Release/opencv_${mod}4100.dll"
+    IMPORTED_IMPLIB_MINSIZEREL "${OPENCV_ROOT}/lib/Release/opencv_${mod}4100.lib"
+    IMPORTED_LOCATION_MINSIZEREL "${OPENCV_ROOT}/bin/Release/opencv_${mod}4100.dll"
+    IMPORTED_IMPLIB_DEBUG "${OPENCV_ROOT}/lib/Debug/opencv_${mod}4100d.lib"
+    IMPORTED_LOCATION_DEBUG "${OPENCV_ROOT}/bin/Debug/opencv_${mod}4100d.dll"
+  )
+endforeach()
+
+target_link_libraries(VideoBlackoutCore PRIVATE
+  vb_opencv_core vb_opencv_imgproc vb_opencv_imgcodecs vb_opencv_video
+  vb_opencv_videoio vb_opencv_dnn
+  "${ORT_ROOT}/lib/onnxruntime.lib"
+)
+
+if(WIN32)
+  target_link_libraries(VideoBlackoutCore PRIVATE bcrypt advapi32 dxgi pdh)
+endif()
+
+add_custom_command(TARGET VideoBlackoutCore POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_BIN}/models"
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${OPENCV_ROOT}/bin/$<IF:$<CONFIG:Debug>,Debug,Release>"
+    "${OUTPUT_BIN}"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${ORT_ROOT}/bin/onnxruntime.dll"
+    "${OUTPUT_BIN}/onnxruntime.dll"
+  COMMENT "Copy OpenCV and ORT runtime next to VideoBlackoutCore.dll"
+)
+
+set(_vb_onnx
+  "${CMAKE_SOURCE_DIR}/models/yolo11n-face.onnx"
+  "${CMAKE_SOURCE_DIR}/models/face_detection_yunet_2023mar.onnx"
+  "${CMAKE_SOURCE_DIR}/models/face-detection-adas-0001.onnx"
+  "${CMAKE_SOURCE_DIR}/models/landmarks-regression-retail-0009.onnx"
+  "${CMAKE_SOURCE_DIR}/models/face-reidentification-retail-0095.onnx"
+)
+foreach(_m ${_vb_onnx})
+  if(EXISTS "${_m}")
+    add_custom_command(TARGET VideoBlackoutCore POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_BIN}/models"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_m}" "${OUTPUT_BIN}/models"
+    )
+  endif()
+endforeach()
+if(EXISTS "${APP_ROOT}/models")
+  add_custom_command(TARGET VideoBlackoutCore POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${APP_ROOT}/models" "${OUTPUT_BIN}/models"
+  )
+endif()
+
+set(_ffmpeg "${APP_ROOT}/tools/ffmpeg/ffmpeg.exe")
+if(NOT EXISTS "${_ffmpeg}")
+  file(GLOB _ffmpeg_alt "${APP_ROOT}/tools/ffmpeg_extract/*/bin/ffmpeg.exe")
+  if(_ffmpeg_alt)
+    list(GET _ffmpeg_alt 0 _ffmpeg)
+  endif()
+endif()
+if(EXISTS "${_ffmpeg}")
+  add_custom_command(TARGET VideoBlackoutCore POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_ffmpeg}" "${OUTPUT_BIN}/ffmpeg.exe"
+  )
+endif()

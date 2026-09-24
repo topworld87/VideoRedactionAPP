@@ -1,0 +1,52 @@
+<Window x:Class="VideoBlackout.Wpf.AccountWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:VideoBlackout.Wpf"
+        Title="{local:Tr accountTitle}"
+        Width="480" SizeToContent="Height"
+        MinHeight="220"
+        Background="#12171F"
+        Foreground="#E8ECF1"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Icon="Assets/app.ico">
+  <WindowChrome.WindowChrome>
+    <WindowChrome CaptionHeight="0" GlassFrameThickness="0" CornerRadius="0"/>
+  </WindowChrome.WindowChrome>
+  <Border BorderBrush="#2C3645" BorderThickness="1">
+    <DockPanel>
+      <Border DockPanel.Dock="Top" Background="#151A22" Height="40"
+              BorderBrush="#232B36" BorderThickness="0,0,0,1"
+              MouseLeftButtonDown="OnTitleBarMouseDown">
+        <DockPanel Margin="12,0,4,0">
+          <Button DockPanel.Dock="Right" Content="✕" Width="36" Height="32"
+                  Padding="0" Click="OnCloseClick" VerticalAlignment="Center"/>
+          <TextBlock Text="{local:Tr accountTitle}" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
+        </DockPanel>
+      </Border>
+      <StackPanel Margin="18,16,18,16">
+        <TextBlock x:Name="PlanText" FontSize="18" FontWeight="Bold" Text="Free"/>
+        <TextBlock x:Name="EmailText" Margin="0,6,0,0" Foreground="#8B95A5" TextWrapping="Wrap"/>
+        <TextBlock x:Name="SummaryText" Margin="0,10,0,0" TextWrapping="Wrap" LineHeight="20"/>
+        <TextBlock x:Name="UntilText" Margin="0,6,0,0" Foreground="#8B95A5" Visibility="Collapsed"/>
+        <TextBlock x:Name="StatusText" Margin="0,12,0,0" TextWrapping="Wrap" Foreground="#E8A838"/>
+        <TextBlock Margin="0,14,0,6" FontSize="11" Foreground="#8B95A5" Text="{local:Tr accountHwid}"/>
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="{local:Tr accountCopy}" MinWidth="72" Margin="8,0,0,0" Click="OnCopyHwid"/>
+          <TextBox x:Name="HwidBox" IsReadOnly="True" FontFamily="Consolas" FontSize="12"
+                   Background="#0F141B" Foreground="#C5CBD3" BorderBrush="#2C3645"
+                   Padding="8,6"/>
+        </DockPanel>
+        <WrapPanel Margin="0,16,0,0" Orientation="Horizontal">
+          <Button x:Name="SignInBtn" Style="{StaticResource PrimaryButton}" Content="{local:Tr accountSignIn}"
+                  MinWidth="110" Padding="12,8" Margin="0,0,8,8" Click="OnSignIn"/>
+          <Button Content="{local:Tr accountUpgrade}" MinWidth="96" Padding="12,8" Margin="0,0,8,8" Click="OnUpgrade"/>
+          <Button Content="{local:Tr accountManage}" MinWidth="120" Padding="12,8" Margin="0,0,8,8" Click="OnManage"/>
+          <Button x:Name="SignOutBtn" Content="{local:Tr accountSignOut}" MinWidth="96" Padding="12,8" Margin="0,0,8,8" Click="OnSignOut"/>
+        </WrapPanel>
+      </StackPanel>
+    </DockPanel>
+  </Border>
+</Window>

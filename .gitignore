@@ -1,0 +1,20 @@
+bin/
+build/
+ui/obj/
+ui/bin/
+Output/
+*.user
+.vs/
+__pycache__/
+*.pyc
+# Shipped .onnx weights are corresponding source (including AGPL yolo11n-face.onnx).
+models/_ir/
+
+# Local installers, store submission, and launchers. Not part of the public tree.
+setup/
+msix/
+version.ini
+安装包.bat
+打包.bat
+提交商店文案.bat
+编译.bat

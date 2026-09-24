@@ -1,0 +1,185 @@
+=== en ===
+Video Blackout
+Copyright (C) 2026 FlyAllRisk
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with this program, in legal/AGPL-3.0.txt. If not, see https://www.gnu.org/licenses/.
+
+Why the whole application is under AGPL-3.0
+
+Video Blackout includes the face-detection model models/yolo11n-face.onnx. That model is based on Ultralytics YOLO11 and is licensed under AGPL-3.0. Ultralytics does not allow this model to be distributed inside a closed-source product. Because the model is part of this program, Video Blackout as a whole is released under AGPL-3.0.
+
+AGPL-3.0 allows use, modification, and charging a fee. It requires that anyone who receives this program can obtain the complete corresponding source and can convey the program under the same license. It does not allow adding further restrictions, such as a ban on redistribution or reverse engineering.
+
+Corresponding source
+
+The corresponding source is the preferred form for modifying this version: the application source, the build scripts, and the model files that ship with the program, including models/yolo11n-face.onnx.
+
+The complete corresponding source for this version is published at no charge at https://github.com/topworld87/VideoRedaction. You may also obtain that source by writing to support@videoredaction.io. This offer lasts at least three years after you receive this version. If you downloaded the program from https://videoredaction.io, the same source is offered from that site at no further charge.
+
+This notice is installed next to the program as legal/NOTICE.txt.
+
+Third-party components
+
+1. yolo11n-face.onnx
+   Face detector derived from Ultralytics YOLO11.
+   License: GNU Affero General Public License v3.0.
+   Upstream project: https://github.com/ultralytics/ultralytics
+   Face-model export: akanametov/yolo-face and deepghs/yolo-face
+   License page: https://www.ultralytics.com/legal/agpl-3.0-software-license
+   Copyright notices of Ultralytics and the model authors are kept.
+
+2. face_detection_yunet_2023mar.onnx
+   OpenCV Zoo. License: MIT.
+   https://github.com/opencv/opencv_zoo
+   Copyright (c) OpenCV team.
+   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files to deal in the software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software, and to permit persons to whom the software is furnished to do so, subject to the copyright notice and this permission notice being included in all copies or substantial portions of the software.
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+3. face-detection-adas-0001
+   landmarks-regression-retail-0009
+   face-reidentification-retail-0095
+   Intel Open Model Zoo. License: Apache License 2.0.
+   https://github.com/openvinotoolkit/open_model_zoo
+   A copy of the Apache License 2.0 is in legal/Apache-2.0.txt.
+
+4. ONNX Runtime (Microsoft.ML.OnnxRuntime.DirectML)
+   Copyright (c) Microsoft Corporation. License: MIT.
+   https://github.com/microsoft/onnxruntime
+   Permission is hereby granted, free of charge, to any person obtaining a copy of this software to deal in the software without restriction, including commercial use, provided the copyright notice and this permission notice are preserved.
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+5. OpenCV 4.10
+   License: Apache License 2.0. https://opencv.org
+   A copy of the Apache License 2.0 is in legal/Apache-2.0.txt.
+
+Changes
+
+Video Blackout includes these components in its own application. The file yolo11n-face.onnx is the unmodified face-model export named above. This program does not modify the Ultralytics training source.
+
+=== zh-CN ===
+Video Blackout
+版权所有 (C) 2026 FlyAllRisk
+
+本程序是自由软件。你可以在自由软件基金会发布的 GNU Affero 通用公共许可证第 3 版（AGPL-3.0）条款下再分发和修改它。你可以选用该许可证的后续版本。
+
+本程序的发布是希望它有用，但没有任何担保，也没有对适销性或特定用途适用性的暗示担保。详情见 GNU Affero 通用公共许可证。
+
+本程序应随附该许可证全文，文件为 legal/AGPL-3.0.txt。若没有，请看 https://www.gnu.org/licenses/ 。
+
+为什么整个软件都是 AGPL-3.0
+
+Video Blackout 包含人脸检测模型 models/yolo11n-face.onnx。该模型基于 Ultralytics YOLO11，许可证为 AGPL-3.0。Ultralytics 不允许把这个模型放进闭源产品里分发。模型是本程序的一部分，因此 Video Blackout 整体以 AGPL-3.0 发布。
+
+AGPL-3.0 允许使用、修改和收费。收到本程序的人必须能拿到完整对应源代码，并可以在同一许可证下再分发。不能另外增加限制，例如禁止再分发或禁止反向工程。
+
+对应源代码
+
+对应源代码是修改这一版本所需的首选形式：应用程序源码、构建脚本，以及随程序提供的模型文件，包括 models/yolo11n-face.onnx。
+
+这一版本的完整对应源代码免费发布在 https://github.com/topworld87/VideoRedaction 。也可写信向 support@videoredaction.io 免费索取。此要约在你收到本版本后至少三年内有效。若本程序是从 https://videoredaction.io 下载的，同一份源代码也在该网站提供，且不另收费。
+
+本声明随程序安装在 legal/NOTICE.txt。
+
+第三方组件
+
+1. yolo11n-face.onnx
+   基于 Ultralytics YOLO11 的人脸检测模型。
+   许可证：GNU Affero 通用公共许可证第 3 版。
+   上游项目：https://github.com/ultralytics/ultralytics
+   人脸模型导出：akanametov/yolo-face 与 deepghs/yolo-face
+   许可证页面：https://www.ultralytics.com/legal/agpl-3.0-software-license
+   Ultralytics 及模型作者的版权声明予以保留。
+
+2. face_detection_yunet_2023mar.onnx
+   OpenCV Zoo。许可证：MIT。
+   https://github.com/opencv/opencv_zoo
+   Copyright (c) OpenCV team.
+   在保留版权声明和许可声明的前提下，可以不受限制地使用、复制、修改、合并、发布、分发、再许可和销售。
+   该软件按“原样”提供，没有任何担保。
+
+3. face-detection-adas-0001
+   landmarks-regression-retail-0009
+   face-reidentification-retail-0095
+   Intel Open Model Zoo。许可证：Apache License 2.0。
+   https://github.com/openvinotoolkit/open_model_zoo
+   Apache License 2.0 全文在 legal/Apache-2.0.txt。
+
+4. ONNX Runtime（Microsoft.ML.OnnxRuntime.DirectML）
+   Copyright (c) Microsoft Corporation。许可证：MIT。
+   https://github.com/microsoft/onnxruntime
+   在保留版权声明和许可声明的前提下可以自由使用，包括商业使用。
+   该软件按“原样”提供，没有任何担保。
+
+5. OpenCV 4.10
+   许可证：Apache License 2.0。https://opencv.org
+   Apache License 2.0 全文在 legal/Apache-2.0.txt。
+
+修改说明
+
+Video Blackout 在自己的程序中包含上述组件。yolo11n-face.onnx 是上面列出的、未经改动的人脸模型导出文件。本程序没有修改 Ultralytics 的训练源码。
+
+=== zh-TW ===
+Video Blackout
+著作權所有 (C) 2026 FlyAllRisk
+
+本程式是自由軟體。你可以在自由軟體基金會發布的 GNU Affero 通用公共授權條款第 3 版（AGPL-3.0）下再散布和修改它。你可以選用該授權的後續版本。
+
+本程式的發布是希望它有用，但沒有任何擔保，也沒有對適銷性或特定用途適用性的暗示擔保。詳情見 GNU Affero 通用公共授權條款。
+
+本程式應隨附該授權全文，檔案為 legal/AGPL-3.0.txt。若沒有，請看 https://www.gnu.org/licenses/ 。
+
+為什麼整個軟體都是 AGPL-3.0
+
+Video Blackout 包含人臉偵測模型 models/yolo11n-face.onnx。該模型基於 Ultralytics YOLO11，授權為 AGPL-3.0。Ultralytics 不允許把這個模型放進閉源產品裡散布。模型是本程式的一部分，因此 Video Blackout 整體以 AGPL-3.0 發布。
+
+AGPL-3.0 允許使用、修改和收費。收到本程式的人必須能拿到完整對應原始碼，並可以在同一授權下再散布。不能另外增加限制，例如禁止再散布或禁止反向工程。
+
+對應原始碼
+
+對應原始碼是修改這一版本所需的首選形式：應用程式原始碼、建置指令碼，以及隨程式提供的模型檔，包括 models/yolo11n-face.onnx。
+
+這一版本的完整對應原始碼免費發布在 https://github.com/topworld87/VideoRedaction 。也可寫信向 support@videoredaction.io 免費索取。此要約在你收到本版本後至少三年內有效。若本程式是從 https://videoredaction.io 下載的，同一份原始碼也在該網站提供，且不另收費。
+
+本聲明隨程式安裝在 legal/NOTICE.txt。
+
+第三方元件
+
+1. yolo11n-face.onnx
+   基於 Ultralytics YOLO11 的人臉偵測模型。
+   授權：GNU Affero 通用公共授權條款第 3 版。
+   上游專案：https://github.com/ultralytics/ultralytics
+   人臉模型匯出：akanametov/yolo-face 與 deepghs/yolo-face
+   授權頁面：https://www.ultralytics.com/legal/agpl-3.0-software-license
+   Ultralytics 及模型作者的著作權聲明予以保留。
+
+2. face_detection_yunet_2023mar.onnx
+   OpenCV Zoo。授權：MIT。
+   https://github.com/opencv/opencv_zoo
+   Copyright (c) OpenCV team.
+   在保留著作權聲明和許可聲明的前提下，可以不受限制地使用、複製、修改、合併、發布、散布、再許可和銷售。
+   該軟體按「原樣」提供，沒有任何擔保。
+
+3. face-detection-adas-0001
+   landmarks-regression-retail-0009
+   face-reidentification-retail-0095
+   Intel Open Model Zoo。授權：Apache License 2.0。
+   https://github.com/openvinotoolkit/open_model_zoo
+   Apache License 2.0 全文在 legal/Apache-2.0.txt。
+
+4. ONNX Runtime（Microsoft.ML.OnnxRuntime.DirectML）
+   Copyright (c) Microsoft Corporation。授權：MIT。
+   https://github.com/microsoft/onnxruntime
+   在保留著作權聲明和許可聲明的前提下可以自由使用，包括商業使用。
+   該軟體按「原樣」提供，沒有任何擔保。
+
+5. OpenCV 4.10
+   授權：Apache License 2.0。https://opencv.org
+   Apache License 2.0 全文在 legal/Apache-2.0.txt。
+
+修改說明
+
+Video Blackout 在自己的程式中包含上述元件。yolo11n-face.onnx 是上面列出的、未經改動的人臉模型匯出檔。本程式沒有修改 Ultralytics 的訓練原始碼。

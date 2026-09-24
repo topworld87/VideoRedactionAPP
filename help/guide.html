@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Blackout user guide</title>
+<script>
+(function () {
+  function norm(raw) {
+    var s = String(raw || "").replace(/^#/, "").trim().replace(/_/g, "-").toLowerCase();
+    if (!s) return "";
+    if (s.indexOf("zh-tw") === 0 || s.indexOf("zh-hk") === 0 || s.indexOf("zh-mo") === 0 || s.indexOf("hant") >= 0) return "zh-TW";
+    if (s.indexOf("zh") === 0) return "zh-CN";
+    if (s.indexOf("pt") === 0) return "pt-BR";
+    if (s.indexOf("ja") === 0) return "ja";
+    if (s.indexOf("de") === 0) return "de";
+    if (s.indexOf("fr") === 0) return "fr";
+    if (s.indexOf("es") === 0) return "es";
+    if (s.indexOf("en") === 0) return "en";
+    return "";
+  }
+  document.documentElement.dataset.lang = norm(location.hash) || norm(navigator.language) || "en";
+})();
+</script>
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #151a22;
+    --card: #1c2430;
+    --line: #2a3340;
+    --text: #e8ecf1;
+    --muted: #8b95a5;
+    --green: #3ddc84;
+    --blue: #7eb0ff;
+    --purple: #d08cff;
+    --amber: #e8a838;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans JP", "Yu Gothic", sans-serif;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 22px;
+    background: rgba(14, 17, 22, 0.92);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(10px);
+  }
+  .brand { font-weight: 700; letter-spacing: 0.01em; }
+  .brand span { color: var(--muted); font-weight: 500; margin-left: 8px; }
+  #langs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+  #langs button {
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #langs button.on { color: var(--text); background: #243041; border-color: #3a4a60; }
+  article { display: none; }
+  html[data-lang="en"] #en,
+  html[data-lang="de"] #de,
+  html[data-lang="fr"] #fr,
+  html[data-lang="es"] #es,
+  html[data-lang="pt-BR"] #pt-BR,
+  html[data-lang="ja"] #ja,
+  html[data-lang="zh-CN"] #zh-CN,
+  html[data-lang="zh-TW"] #zh-TW { display: block; }
+  .wrap {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 760px);
+    gap: 36px;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 22px 80px;
+  }
+  nav.toc { position: sticky; top: 72px; align-self: start; }
+  nav.toc a { display: block; color: var(--muted); font-size: 14px; padding: 4px 0; }
+  nav.toc a:hover { color: var(--text); text-decoration: none; }
+  h1 { font-size: 34px; line-height: 1.2; margin: 0 0 12px; }
+  h2 { font-size: 22px; margin: 36px 0 10px; scroll-margin-top: 76px; }
+  h3 { font-size: 17px; margin: 22px 0 6px; }
+  p { margin: 8px 0; }
+  .lead { color: var(--muted); font-size: 18px; }
+  ul, ol { margin: 8px 0 8px 1.2em; padding: 0; }
+  li { margin: 4px 0; }
+  .note, table { background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+  .note { padding: 12px 14px; color: var(--text); }
+  .note strong { color: var(--amber); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 8px; overflow: hidden; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-size: 13px; font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  code, .key { font-family: Consolas, "Cascadia Mono", monospace; font-size: 0.92em; }
+  .key { background: #10151c; border: 1px solid var(--line); border-radius: 5px; padding: 0 6px; }
+  .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+  .g { background: var(--green); } .b { background: var(--blue); } .p { background: var(--purple); }
+  footer { color: var(--muted); font-size: 13px; margin-top: 40px; }
+  @media (max-width: 860px) {
+    .wrap { grid-template-columns: 1fr; gap: 8px; }
+    nav.toc { position: static; }
+    .bar { align-items: flex-start; flex-direction: column; }
+  }
+  @media print {
+    .bar, nav.toc { display: none; }
+    body { background: #fff; color: #111; }
+    .note, table, .key { background: #fff; border-color: #ccc; color: #111; }
+    a { color: #111; }
+  }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="brand">Video Blackout <span id="brand-sub">User guide</span></div>
+  <div id="langs" role="group" aria-label="Language"></div>
+</header>
+<main>
+
+<article id="en" lang="en" data-title="Video Blackout user guide" data-sub="User guide">
+<div class="wrap">
+<nav class="toc">
+  <a href="#en-start">Quick start</a>
+  <a href="#en-window">The window</a>
+  <a href="#en-files">Add videos</a>
+  <a href="#en-jobs">Choose a job</a>
+  <a href="#en-review">Review detections</a>
+  <a href="#en-boxes">Draw a box</a>
+  <a href="#en-style">Mask style</a>
+  <a href="#en-preview">Preview</a>
+  <a href="#en-export">Export</a>
+  <a href="#en-account">Account and plans</a>
+  <a href="#en-settings">GPU and language</a>
+  <a href="#en-keys">Shortcuts</a>
+  <a href="#en-trouble">If something is wrong</a>
+  <a href="#en-limits">Before you rely on it</a>
+</nav>
+<div>
+<h1>User guide</h1>
+<p class="lead">Redact faces and license plates on your PC. The video stays on this computer. Export writes a new MP4 and leaves the original file alone.</p>
+
+<h2 id="en-start">Quick start</h2>
+<h3>Redact all</h3>
+<ol>
+  <li>Choose <strong>Redact all</strong>.</li>
+  <li>Add videos, then choose <strong>Faces and plates</strong>, <strong>Faces only</strong>, or <strong>Plates only</strong>.</li>
+  <li>Play the video. Uncheck anyone who should stay clear. Draw a box if the detector missed something.</li>
+  <li>Click <strong>Process all</strong>.</li>
+</ol>
+<h3>Keep people</h3>
+<ol>
+  <li>Choose <strong>Keep people</strong> and open one video.</li>
+  <li>Click each face that should stay clear. A green box marks them.</li>
+  <li>Click <strong>Process this video</strong>.</li>
+</ol>
+
+<h2 id="en-window">The window</h2>
+<ul>
+  <li><strong>Left:</strong> the file list and the job.</li>
+  <li><strong>Center:</strong> the preview, the box tools, and the timeline.</li>
+  <li><strong>Right:</strong> faces and plates the detector found, plus boxes you drew.</li>
+  <li><strong>Top:</strong> Process, your plan, and the language button.</li>
+</ul>
+<p>Play only previews the video. It does not redact or save anything.</p>
+
+<h2 id="en-files">Add videos</h2>
+<ul>
+  <li><strong>File &gt; Open</strong>, or click the empty preview, opens one video.</li>
+  <li><strong>File &gt; Add to File List</strong>, or <strong>Add</strong>, adds one or more videos.</li>
+  <li>Drop a video onto the window to add and open it. Drop several files, or a folder, onto the file list to add them. A folder adds videos in that folder only, not in subfolders.</li>
+  <li>Double-click a row to open it.</li>
+</ul>
+<p>Accepted types: MP4, AVI, MOV, MKV, WMV, M4V, WebM, MPG, and MPEG. The file dialog lists the common ones. Choose <strong>All files</strong> for the rest.</p>
+<p><strong>Remove</strong>, <strong>Clear done</strong>, and <strong>Clear all</strong> change the list only. They do not delete files on disk.</p>
+
+<h2 id="en-jobs">Choose a job</h2>
+<h3>Redact all</h3>
+<p>Masks every detected face and plate, then processes the waiting list. On the right, a checked item is masked. Uncheck one to leave that person or plate clear in this video.</p>
+<h3>Keep people</h3>
+<p>Use this when specific people should stay visible and everyone else should be masked. Click a face in the preview. Scrub the video to see the same person recognized later. If the app asks, choose <strong>Same person</strong> or <strong>Not them</strong>.</p>
+<p><strong>Also redact plates</strong> is on by default. Turn it off if plates should stay visible. This choice applies to the current file only. Switching back to <strong>Redact all</strong> discards the people you kept on this video.</p>
+<p class="note">An empty detection list is normal before you play. Export still scans the whole file.</p>
+
+<h2 id="en-review">Review detections</h2>
+<p>Play or drag the timeline. Detections appear on the right as you move through the video.</p>
+<ul>
+  <li><span class="swatch g"></span>Green boxes stay clear. They appear in <strong>Keep people</strong>.</li>
+  <li>In <strong>Redact all</strong>, checked rows are masked. Unchecked rows stay clear on this video.</li>
+</ul>
+
+<h2 id="en-boxes">Draw a box</h2>
+<p>Draw a box only when automatic detection missed a face, a plate, or another region such as a badge or a screen.</p>
+<ul>
+  <li><span class="swatch b"></span><strong>Box &amp; follow</strong> tracks the region as it moves. Export masks it.</li>
+  <li><span class="swatch p"></span><strong>Box &amp; pin</strong> stays in that place until the video ends. Export masks it.</li>
+</ul>
+<p>Pause on a clear frame, choose the tool, then drag a rectangle on the preview. Both tools are available in either job.</p>
+
+<h2 id="en-style">Mask style</h2>
+<p><strong>Edit &gt; Mask style</strong>:</p>
+<ul>
+  <li><strong>Mosaic</strong></li>
+  <li><strong>Blur</strong></li>
+  <li><strong>Solid color</strong></li>
+</ul>
+<p>All three replace the pixels in the exported file. They are not a layer that a player or an editor can turn off later. The original file is unchanged.</p>
+
+<h2 id="en-preview">Preview</h2>
+<ul>
+  <li>Drag the filmstrip to move through the video.</li>
+  <li>The maximize button hides the side panels. Press Esc to restore them.</li>
+  <li>The time display is hours, minutes, seconds, and frames.</li>
+</ul>
+
+<h2 id="en-export">Export</h2>
+<p>The button label follows the job: <strong>Process all</strong> or <strong>Process this video</strong>.</p>
+<ul>
+  <li><strong>One video:</strong> choose where to save. The suggested name ends in <code>_redacted.mp4</code>.</li>
+  <li><strong>Several videos:</strong> Pro and Annual process the waiting list. Each file is saved next to the original as <code>*_redacted.mp4</code>. If that name exists, a number is added. Confirm before the batch starts.</li>
+  <li>Finished rows are skipped. Remove a finished video and add it again if you need another export.</li>
+  <li>The window stays locked until processing finishes. You can cancel.</li>
+  <li>A video longer than your plan allows is marked <strong>Too long</strong> and is not exported.</li>
+</ul>
+<p>Free exports include the watermark “Created with videoredaction.io”. Paid exports do not. The result is an H.264 MP4.</p>
+
+<h2 id="en-account">Account and plans</h2>
+<table>
+  <thead><tr><th>Plan</th><th>What you get</th></tr></thead>
+  <tbody>
+    <tr><td>Free</td><td>No account. One video at a time, up to 10 minutes, with a watermark.</td></tr>
+    <tr><td>Basic</td><td>1 device. One video at a time, up to 10 minutes, no watermark.</td></tr>
+    <tr><td>Pro</td><td>Up to 2 devices. Batch processing, unlimited length, no watermark.</td></tr>
+    <tr><td>Annual</td><td>Same capabilities as Pro, billed yearly.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>Account &gt; Account</strong> shows the plan, email, and hardware ID. Copy the hardware ID if support asks for it.</li>
+  <li><strong>Sign in</strong> opens the browser, then returns the license to this PC. <strong>Upgrade</strong> opens the pricing page.</li>
+  <li><strong>Sign out</strong> returns this PC to Free. The device stays on the account until you remove it on the website.</li>
+  <li>If sign-in says the device limit is full, remove a computer on the website, then sign in again.</li>
+</ul>
+<p>After install and activation, processing works without an internet connection. Sign-in and upgrades need the network.</p>
+
+<h2 id="en-settings">GPU and language</h2>
+<p><strong>Edit &gt; Settings</strong> asks whether to use the GPU (DirectML). If the GPU cannot start, the engine uses the CPU and is much slower. The label at the right of the process bar shows which one is running.</p>
+<p>The language button at the top right is remembered on this PC. This guide opens in the same language.</p>
+<p>Windows 10 or 11, 64-bit. A CPU with AVX2. 4 GB of RAM, 8 GB recommended. About 1 GB of free disk space.</p>
+
+<h2 id="en-keys">Shortcuts</h2>
+<table>
+  <thead><tr><th>Key</th><th>Action</th></tr></thead>
+  <tbody>
+    <tr><td><span class="key">Left</span> / <span class="key">Right</span></td><td>Step one frame</td></tr>
+    <tr><td><span class="key">Shift</span> + arrows</td><td>Step about one second</td></tr>
+    <tr><td><span class="key">Home</span> / <span class="key">End</span></td><td>Go to the start or the end</td></tr>
+    <tr><td><span class="key">Ctrl</span> + wheel on the timeline</td><td>Zoom the timeline. The wheel alone pans it.</td></tr>
+    <tr><td><span class="key">Esc</span></td><td>Leave the maximized preview</td></tr>
+    <tr><td><span class="key">F8</span></td><td>Save a detection debug folder. See below.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="en-trouble">If something is wrong</h2>
+<ul>
+  <li><strong>The video will not open.</strong> Try another file, or convert it to MP4.</li>
+  <li><strong>The detection list is empty.</strong> Play or scrub. Export still scans the file.</li>
+  <li><strong>A face or plate was missed.</strong> Draw <strong>Box &amp; follow</strong> or <strong>Box &amp; pin</strong>.</li>
+  <li><strong>The wrong person stayed clear.</strong> In Keep people, click the correct face. Choose <strong>Not them</strong> when a match is wrong.</li>
+  <li><strong>Too long.</strong> Shorten the video, or use Pro or Annual.</li>
+  <li><strong>Batch is blocked.</strong> Free and Basic process one video at a time.</li>
+  <li><strong>Sign-in failed.</strong> Check the network. If the device limit is full, remove a PC on the website.</li>
+  <li><strong>Processing is slow.</strong> In Settings, choose GPU when it is available.</li>
+  <li><strong>One frame looks wrong.</strong> Pause there, then use <strong>Help &gt; Dump detect debug (F8)</strong>. The folder contains <code>frame.png</code>, <code>overlay.png</code>, and <code>report.txt</code>.</li>
+</ul>
+
+<h2 id="en-limits">Before you rely on it</h2>
+<p>Watch the exported file yourself. Detection can miss a face or a plate when it is small, turned away, blurred, or blocked. The new file replaces those pixels. It does not change the original, and it does not decide whether the result meets a law, a court order, or a company policy.</p>
+<footer>Video Blackout · videoredaction.io</footer>
+</div>
+</div>
+</article>
+
+<article id="zh-CN" lang="zh-CN" data-title="Video Blackout 使用说明" data-sub="使用说明">
+<div class="wrap">
+<nav class="toc">
+  <a href="#zh-start">快速开始</a>
+  <a href="#zh-window">窗口</a>
+  <a href="#zh-files">添加视频</a>
+  <a href="#zh-jobs">选择任务</a>
+  <a href="#zh-review">查看检测</a>
+  <a href="#zh-boxes">手动框选</a>
+  <a href="#zh-style">遮罩样式</a>
+  <a href="#zh-preview">预览</a>
+  <a href="#zh-export">导出</a>
+  <a href="#zh-account">账户和方案</a>
+  <a href="#zh-settings">GPU 和语言</a>
+  <a href="#zh-keys">快捷键</a>
+  <a href="#zh-trouble">遇到问题时</a>
+  <a href="#zh-limits">使用前请知道</a>
+</nav>
+<div>
+<h1>使用说明</h1>
+<p class="lead">在你自己的电脑上给人脸和车牌打码。视频不会上传。导出会生成一个新的 MP4，原文件保持不动。</p>
+
+<h2 id="zh-start">快速开始</h2>
+<h3>全部打码</h3>
+<ol>
+  <li>选择<strong>全部打码</strong>。</li>
+  <li>添加视频，再选择<strong>人脸和车牌</strong>、<strong>仅人脸</strong>或<strong>仅车牌</strong>。</li>
+  <li>播放视频。要保持清晰的人，取消勾选。检测漏掉的地方，自己框选。</li>
+  <li>点击<strong>全部处理</strong>。</li>
+</ol>
+<h3>保留人物</h3>
+<ol>
+  <li>选择<strong>保留人物</strong>，打开一个视频。</li>
+  <li>点击每一张要保持清晰的人脸。绿色框表示保留。</li>
+  <li>点击<strong>处理此视频</strong>。</li>
+</ol>
+
+<h2 id="zh-window">窗口</h2>
+<ul>
+  <li><strong>左侧：</strong>文件列表和任务。</li>
+  <li><strong>中间：</strong>预览、框选工具和时间轴。</li>
+  <li><strong>右侧：</strong>检测到的人脸和车牌，以及你画的框。</li>
+  <li><strong>顶部：</strong>处理按钮、当前方案和语言按钮。</li>
+</ul>
+<p>播放只是预览，不会打码，也不会保存。</p>
+
+<h2 id="zh-files">添加视频</h2>
+<ul>
+  <li><strong>文件 &gt; 打开</strong>，或点击空白预览，打开一个视频。</li>
+  <li><strong>文件 &gt; 添加到文件列表</strong>，或<strong>添加</strong>，可一次加入多个视频。</li>
+  <li>把一个视频拖到窗口上，会加入列表并打开。把多个文件或一个文件夹拖到文件列表，只加入列表。文件夹只加入这一层里的视频，不进入子文件夹。</li>
+  <li>双击某一行即可打开。</li>
+</ul>
+<p>可用格式：MP4、AVI、MOV、MKV、WMV、M4V、WebM、MPG、MPEG。文件对话框列出常见格式。其余格式请选<strong>所有文件</strong>。</p>
+<p><strong>移除</strong>、<strong>清除已完成</strong>和<strong>全部清除</strong>只改列表，不会删除磁盘上的文件。</p>
+
+<h2 id="zh-jobs">选择任务</h2>
+<h3>全部打码</h3>
+<p>遮住检测到的每一张人脸和车牌，然后处理等待中的列表。右侧勾选的目标会被遮住。取消勾选后，这个人在当前视频里保持清晰。</p>
+<h3>保留人物</h3>
+<p>适合只让指定的人保持清晰、其余的人都被遮住。在预览上点击人脸。拖动视频，可以看到同一个人稍后被认出来。如果软件询问，选择<strong>同一人</strong>或<strong>不是此人</strong>。</p>
+<p><strong>同时遮住车牌</strong>默认开启。车牌也要保持清晰时，关掉它。这个选择只作用于当前文件。切回<strong>全部打码</strong>后，此视频上已保留的人物会被放弃。</p>
+<p class="note">还没播放时，检测列表是空的，这很正常。导出时仍会扫描整个文件。</p>
+
+<h2 id="zh-review">查看检测</h2>
+<p>播放或拖动时间轴。走到的画面，检测结果会出现在右侧。</p>
+<ul>
+  <li><span class="swatch g"></span>绿色框保持清晰，出现在<strong>保留人物</strong>里。</li>
+  <li>在<strong>全部打码</strong>里，勾选的行会被遮住，取消勾选的行在此视频中保持清晰。</li>
+</ul>
+
+<h2 id="zh-boxes">手动框选</h2>
+<p>只有自动检测漏掉人脸、车牌，或还要遮住工牌、屏幕等区域时，才需要自己画框。</p>
+<ul>
+  <li><span class="swatch b"></span><strong>框选并跟踪</strong>：框会跟着目标移动，导出时被遮住。</li>
+  <li><span class="swatch p"></span><strong>框选并固定</strong>：框停在原地，直到视频结束，导出时被遮住。</li>
+</ul>
+<p>先暂停在看得清的一帧，选好工具，再在预览上拖出一个矩形。两种任务都可以使用这两个工具。</p>
+
+<h2 id="zh-style">遮罩样式</h2>
+<p>打开<strong>编辑 &gt; 遮罩样式</strong>：</p>
+<ul>
+  <li><strong>马赛克</strong></li>
+  <li><strong>模糊</strong></li>
+  <li><strong>纯色</strong></li>
+</ul>
+<p>三种都会改写导出文件里的像素，不是播放器或剪辑软件可以事后关掉的一层。原文件不会被修改。</p>
+
+<h2 id="zh-preview">预览</h2>
+<ul>
+  <li>拖动底部胶片条来移动画面。</li>
+  <li>放大预览会隐藏两侧面板。按 Esc 还原。</li>
+  <li>时间显示为时、分、秒、帧。</li>
+</ul>
+
+<h2 id="zh-export">导出</h2>
+<p>按钮文字随任务变化：<strong>全部处理</strong>或<strong>处理此视频</strong>。</p>
+<ul>
+  <li><strong>一个视频：</strong>自己选择保存位置。建议的文件名以 <code>_redacted.mp4</code> 结尾。</li>
+  <li><strong>多个视频：</strong>专业版和年付可以处理等待中的列表。每个文件保存在原文件旁边，名为 <code>*_redacted.mp4</code>。这个名字已存在时会加上序号。开始前会先确认。</li>
+  <li>已完成的行会被跳过。需要再导出一次时，先移除再重新添加。</li>
+  <li>处理完成前主窗口锁定。可以取消。</li>
+  <li>超过当前方案时长的视频会标为<strong>过长</strong>，不会导出。</li>
+</ul>
+<p>免费版导出带有水印 “Created with videoredaction.io”。付费方案没有水印。导出文件是 H.264 MP4。</p>
+
+<h2 id="zh-account">账户和方案</h2>
+<table>
+  <thead><tr><th>方案</th><th>能做什么</th></tr></thead>
+  <tbody>
+    <tr><td>免费版</td><td>不用账户。一次处理一个视频，最长 10 分钟，导出带水印。</td></tr>
+    <tr><td>基础版</td><td>1 台设备。一次处理一个视频，最长 10 分钟，导出无水印。</td></tr>
+    <tr><td>专业版</td><td>最多 2 台设备。可批量处理，不限时长，导出无水印。</td></tr>
+    <tr><td>年付</td><td>能力与专业版相同，按年计费。</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>账户 &gt; 账户</strong>显示方案、邮箱和硬件 ID。客服需要时可以复制硬件 ID。</li>
+  <li><strong>登录</strong>会打开浏览器，再把许可证带回这台电脑。<strong>升级</strong>打开价格页面。</li>
+  <li><strong>退出登录</strong>后，这台电脑回到免费版。设备仍留在账户里，直到你在网站上移除它。</li>
+  <li>如果提示设备数量已满，先在网站上移除一台电脑，再重新登录。</li>
+</ul>
+<p>安装并激活之后，处理视频不需要联网。登录和升级需要网络。</p>
+
+<h2 id="zh-settings">GPU 和语言</h2>
+<p><strong>编辑 &gt; 设置</strong>询问是否使用 GPU（DirectML）。如果 GPU 无法启动，引擎会改用 CPU，速度会慢很多。处理栏右侧会显示当前用的是哪一种。</p>
+<p>右上角的语言按钮会记在这台电脑上。这份说明会用同一种语言打开。</p>
+<p>系统要求：Windows 10 或 11，64 位；支持 AVX2 的 CPU；内存 4 GB，建议 8 GB；大约 1 GB 可用磁盘空间。</p>
+
+<h2 id="zh-keys">快捷键</h2>
+<table>
+  <thead><tr><th>按键</th><th>作用</th></tr></thead>
+  <tbody>
+    <tr><td><span class="key">Left</span> / <span class="key">Right</span></td><td>前进或后退一帧</td></tr>
+    <tr><td><span class="key">Shift</span> + 方向键</td><td>大约前进或后退一秒</td></tr>
+    <tr><td><span class="key">Home</span> / <span class="key">End</span></td><td>跳到开头或结尾</td></tr>
+    <tr><td>时间轴上 <span class="key">Ctrl</span> + 滚轮</td><td>放大缩小时间轴。只滚动滚轮是左右平移。</td></tr>
+    <tr><td><span class="key">Esc</span></td><td>退出放大预览</td></tr>
+    <tr><td><span class="key">F8</span></td><td>保存检测调试文件夹。见下文。</td></tr>
+  </tbody>
+</table>
+
+<h2 id="zh-trouble">遇到问题时</h2>
+<ul>
+  <li><strong>打不开视频。</strong>换一个文件，或先转成 MP4。</li>
+  <li><strong>检测列表是空的。</strong>先播放或拖动。导出时仍会扫描文件。</li>
+  <li><strong>漏了人脸或车牌。</strong>用<strong>框选并跟踪</strong>或<strong>框选并固定</strong>。</li>
+  <li><strong>保留错了人。</strong>在保留人物里点击正确的人脸。认错时选<strong>不是此人</strong>。</li>
+  <li><strong>过长。</strong>把视频剪短，或使用专业版、年付。</li>
+  <li><strong>不能批量。</strong>免费版和基础版一次只能处理一个视频。</li>
+  <li><strong>登录失败。</strong>检查网络。设备数量已满时，到网站上移除一台电脑。</li>
+  <li><strong>处理很慢。</strong>在设置里，有 GPU 时选择使用 GPU。</li>
+  <li><strong>某一帧看起来不对。</strong>暂停在那一帧，然后用<strong>帮助 &gt; 导出检测调试 (F8)</strong>。文件夹里有 <code>frame.png</code>、<code>overlay.png</code> 和 <code>report.txt</code>。</li>
+</ul>
+
+<h2 id="zh-limits">使用前请知道</h2>
+<p>请自己看一遍导出的文件。人脸或车牌很小、侧过脸、模糊或被挡住时，检测可能漏掉。新文件会改写这些像素，不会改原文件，也不会判断结果是否符合法律、法庭要求或公司规定。</p>
+<footer>Video Blackout · videoredaction.io</footer>
+</div>
+</div>
+</article>
+
+<article id="zh-TW" lang="zh-TW" data-title="Video Blackout 使用說明" data-sub="使用說明">
+<div class="wrap">
+<nav class="toc">
+  <a href="#tw-start">快速開始</a>
+  <a href="#tw-window">視窗</a>
+  <a href="#tw-files">新增影片</a>
+  <a href="#tw-jobs">選擇任務</a>
+  <a href="#tw-review">查看檢測</a>
+  <a href="#tw-boxes">手動框選</a>
+  <a href="#tw-style">遮罩樣式</a>
+  <a href="#tw-preview">預覽</a>
+  <a href="#tw-export">匯出</a>
+  <a href="#tw-account">賬戶和方案</a>
+  <a href="#tw-settings">GPU 和語言</a>
+  <a href="#tw-keys">快速鍵</a>
+  <a href="#tw-trouble">遇到問題時</a>
+  <a href="#tw-limits">使用前請知道</a>
+</nav>
+<div>
+<h1>使用說明</h1>
+<p class="lead">在你自己的電腦上為人臉和車牌打碼。影片不會上傳。匯出會產生一個新的 MP4，原檔案保持不動。</p>
+
+<h2 id="tw-start">快速開始</h2>
+<h3>全部打碼</h3>
+<ol>
+  <li>選擇<strong>全部打碼</strong>。</li>
+  <li>新增影片，再選擇<strong>人臉和車牌</strong>、<strong>僅人臉</strong>或<strong>僅車牌</strong>。</li>
+  <li>播放影片。要保持清晰的人，取消勾選。檢測漏掉的地方，自己框選。</li>
+  <li>點選<strong>全部處理</strong>。</li>
+</ol>
+<h3>保留人物</h3>
+<ol>
+  <li>選擇<strong>保留人物</strong>，開啟一支影片。</li>
+  <li>點選每一張要保持清晰的人臉。綠色框表示保留。</li>
+  <li>點選<strong>處理此影片</strong>。</li>
+</ol>
+
+<h2 id="tw-window">視窗</h2>
+<ul>
+  <li><strong>左側：</strong>檔案列表和任務。</li>
+  <li><strong>中間：</strong>預覽、框選工具和時間軸。</li>
+  <li><strong>右側：</strong>檢測到的人臉和車牌，以及你畫的框。</li>
+  <li><strong>頂部：</strong>處理按鈕、目前方案和語言按鈕。</li>
+</ul>
+<p>播放只是預覽，不會打碼，也不會儲存。</p>
+
+<h2 id="tw-files">新增影片</h2>
+<ul>
+  <li><strong>檔案 &gt; 開啟</strong>，或點選空白預覽，開啟一支影片。</li>
+  <li><strong>檔案 &gt; 新增到檔案列表</strong>，或<strong>新增</strong>，可一次加入多支影片。</li>
+  <li>把一支影片拖到視窗上，會加入列表並開啟。把多個檔案或一個資料夾拖到檔案列表，只加入列表。資料夾只加入這一層裡的影片，不進入子資料夾。</li>
+  <li>按兩下某一列即可開啟。</li>
+</ul>
+<p>可用格式：MP4、AVI、MOV、MKV、WMV、M4V、WebM、MPG、MPEG。檔案對話方塊列出常見格式。其餘格式請選<strong>所有檔案</strong>。</p>
+<p><strong>移除</strong>、<strong>清除已完成</strong>和<strong>全部清除</strong>只改列表，不會刪除磁碟上的檔案。</p>
+
+<h2 id="tw-jobs">選擇任務</h2>
+<h3>全部打碼</h3>
+<p>遮住檢測到的每一張人臉和車牌，然後處理等待中的列表。右側勾選的目標會被遮住。取消勾選後，這個人在目前影片裡保持清晰。</p>
+<h3>保留人物</h3>
+<p>適合只讓指定的人保持清晰、其餘的人都被遮住。在預覽上點選人臉。拖動影片，可以看到同一個人稍後被認出來。如果軟體詢問，選擇<strong>同一人</strong>或<strong>不是此人</strong>。</p>
+<p><strong>同時遮住車牌</strong>預設開啟。車牌也要保持清晰時，關掉它。這個選擇只作用於目前檔案。切回<strong>全部打碼</strong>後，此影片上已保留的人物會被放棄。</p>
+<p class="note">還沒播放時，檢測列表是空的，這很正常。匯出時仍會掃描整個檔案。</p>
+
+<h2 id="tw-review">查看檢測</h2>
+<p>播放或拖動時間軸。走到的畫面，檢測結果會出現在右側。</p>
+<ul>
+  <li><span class="swatch g"></span>綠色框保持清晰，出現在<strong>保留人物</strong>裡。</li>
+  <li>在<strong>全部打碼</strong>裡，勾選的列會被遮住，取消勾選的列在此影片中保持清晰。</li>
+</ul>
+
+<h2 id="tw-boxes">手動框選</h2>
+<p>只有自動檢測漏掉人臉、車牌，或還要遮住識別證、螢幕等區域時，才需要自己畫框。</p>
+<ul>
+  <li><span class="swatch b"></span><strong>框選並跟蹤</strong>：框會跟著目標移動，匯出時被遮住。</li>
+  <li><span class="swatch p"></span><strong>框選並固定</strong>：框停在原地，直到影片結束，匯出時被遮住。</li>
+</ul>
+<p>先暫停在看得清的一個影格，選好工具，再在預覽上拖出一個矩形。兩種任務都可以使用這兩個工具。</p>
+
+<h2 id="tw-style">遮罩樣式</h2>
+<p>開啟<strong>編輯 &gt; 遮罩樣式</strong>：</p>
+<ul>
+  <li><strong>馬賽克</strong></li>
+  <li><strong>模糊</strong></li>
+  <li><strong>純色</strong></li>
+</ul>
+<p>三種都會改寫匯出檔案裡的像素，不是播放器或剪輯軟體可以事後關掉的一層。原檔案不會被修改。</p>
+
+<h2 id="tw-preview">預覽</h2>
+<ul>
+  <li>拖動底部膠片列來移動畫面。</li>
+  <li>放大預覽會隱藏兩側面板。按 Esc 還原。</li>
+  <li>時間顯示為時、分、秒、影格。</li>
+</ul>
+
+<h2 id="tw-export">匯出</h2>
+<p>按鈕文字隨任務變化：<strong>全部處理</strong>或<strong>處理此影片</strong>。</p>
+<ul>
+  <li><strong>一支影片：</strong>自己選擇儲存位置。建議的檔名以 <code>_redacted.mp4</code> 結尾。</li>
+  <li><strong>多支影片：</strong>專業版和年付可以處理等待中的列表。每個檔案儲存在原檔案旁邊，名為 <code>*_redacted.mp4</code>。這個名字已存在時會加上序號。開始前會先確認。</li>
+  <li>已完成的列會被跳過。需要再匯出一次時，先移除再重新新增。</li>
+  <li>處理完成前主視窗鎖定。可以取消。</li>
+  <li>超過目前方案時長的影片會標為<strong>過長</strong>，不會匯出。</li>
+</ul>
+<p>免費版匯出帶有浮水印 “Created with videoredaction.io”。付費方案沒有浮水印。匯出檔案是 H.264 MP4。</p>
+
+<h2 id="tw-account">賬戶和方案</h2>
+<table>
+  <thead><tr><th>方案</th><th>能做什麼</th></tr></thead>
+  <tbody>
+    <tr><td>免費版</td><td>不用賬戶。一次處理一支影片，最長 10 分鐘，匯出帶浮水印。</td></tr>
+    <tr><td>基礎版</td><td>1 臺裝置。一次處理一支影片，最長 10 分鐘，匯出無浮水印。</td></tr>
+    <tr><td>專業版</td><td>最多 2 臺裝置。可批次處理，不限時長，匯出無浮水印。</td></tr>
+    <tr><td>年付</td><td>能力與專業版相同，按年計費。</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>賬戶 &gt; 賬戶</strong>顯示方案、電子郵件和硬體 ID。客服需要時可以複製硬體 ID。</li>
+  <li><strong>登入</strong>會開啟瀏覽器，再把許可證帶回這臺電腦。<strong>升級</strong>開啟價格頁面。</li>
+  <li><strong>退出登入</strong>後，這臺電腦回到免費版。裝置仍留在賬戶裡，直到你在網站上移除它。</li>
+  <li>如果提示裝置數量已滿，先在網站上移除一臺電腦，再重新登入。</li>
+</ul>
+<p>安裝並啟用之後，處理影片不需要連線。登入和升級需要網路。</p>
+
+<h2 id="tw-settings">GPU 和語言</h2>
+<p><strong>編輯 &gt; 設定</strong>詢問是否使用 GPU（DirectML）。如果 GPU 無法啟動，引擎會改用 CPU，速度會慢很多。處理列右側會顯示目前用的是哪一種。</p>
+<p>右上角的語言按鈕會記在這臺電腦上。這份說明會用同一種語言開啟。</p>
+<p>系統需求：Windows 10 或 11，64 位元；支援 AVX2 的 CPU；記憶體 4 GB，建議 8 GB；大約 1 GB 可用磁碟空間。</p>
+
+<h2 id="tw-keys">快速鍵</h2>
+<table>
+  <thead><tr><th>按鍵</th><th>作用</th></tr></thead>
+  <tbody>
+    <tr><td><span class="key">Left</span> / <span class="key">Right</span></td><td>前進或後退一個影格</td></tr>
+    <tr><td><span class="key">Shift</span> + 方向鍵</td><td>大約前進或後退一秒</td></tr>
+    <tr><td><span class="key">Home</span> / <span class="key">End</span></td><td>跳到開頭或結尾</td></tr>
+    <tr><td>時間軸上 <span class="key">Ctrl</span> + 滾輪</td><td>放大縮小時間軸。只滾動滾輪是左右平移。</td></tr>
+    <tr><td><span class="key">Esc</span></td><td>退出放大預覽</td></tr>
+    <tr><td><span class="key">F8</span></td><td>儲存檢測除錯資料夾。見下文。</td></tr>
+  </tbody>
+</table>
+
+<h2 id="tw-trouble">遇到問題時</h2>
+<ul>
+  <li><strong>打不開影片。</strong>換一個檔案，或先轉成 MP4。</li>
+  <li><strong>檢測列表是空的。</strong>先播放或拖動。匯出時仍會掃描檔案。</li>
+  <li><strong>漏了人臉或車牌。</strong>用<strong>框選並跟蹤</strong>或<strong>框選並固定</strong>。</li>
+  <li><strong>保留錯了人。</strong>在保留人物裡點選正確的人臉。認錯時選<strong>不是此人</strong>。</li>
+  <li><strong>過長。</strong>把影片剪短，或使用專業版、年付。</li>
+  <li><strong>不能批次。</strong>免費版和基礎版一次只能處理一支影片。</li>
+  <li><strong>登入失敗。</strong>檢查網路。裝置數量已滿時，到網站上移除一臺電腦。</li>
+  <li><strong>處理很慢。</strong>在設定裡，有 GPU 時選擇使用 GPU。</li>
+  <li><strong>某個影格看起來不對。</strong>暫停在那個影格，然後用<strong>幫助 &gt; 匯出檢測除錯 (F8)</strong>。資料夾裡有 <code>frame.png</code>、<code>overlay.png</code> 和 <code>report.txt</code>。</li>
+</ul>
+
+<h2 id="tw-limits">使用前請知道</h2>
+<p>請自己看一遍匯出的檔案。人臉或車牌很小、側過臉、模糊或被擋住時，檢測可能漏掉。新檔案會改寫這些像素，不會改原檔案，也不會判斷結果是否符合法律、法庭要求或公司規定。</p>
+<footer>Video Blackout · videoredaction.io</footer>
+</div>
+</div>
+</article>
+
+<article id="de" lang="de" data-title="Video Blackout Benutzerhandbuch" data-sub="Benutzerhandbuch">
+<div class="wrap">
+<nav class="toc">
+  <a href="#de-start">Schnellstart</a>
+  <a href="#de-window">Das Fenster</a>
+  <a href="#de-files">Videos hinzufügen</a>
+  <a href="#de-jobs">Auftrag wählen</a>
+  <a href="#de-review">Erkennungen prüfen</a>
+  <a href="#de-boxes">Rahmen zeichnen</a>
+  <a href="#de-style">Maskenstil</a>
+  <a href="#de-preview">Vorschau</a>
+  <a href="#de-export">Export</a>
+  <a href="#de-account">Konto und Tarife</a>
+  <a href="#de-settings">GPU und Sprache</a>
+  <a href="#de-keys">Tasten</a>
+  <a href="#de-trouble">Wenn etwas nicht stimmt</a>
+  <a href="#de-limits">Bevor Sie sich darauf verlassen</a>
+</nav>
+<div>
+<h1>Benutzerhandbuch</h1>
+<p class="lead">Gesichter und Kennzeichen werden auf Ihrem PC maskiert. Das Video wird nicht hochgeladen. Der Export schreibt eine neue MP4-Datei und lässt die Originaldatei unverändert.</p>
+<h2 id="de-start">Schnellstart</h2>
+<h3>Alles schwärzen</h3>
+<ol>
+  <li>Wählen Sie <strong>Alles schwärzen</strong>.</li>
+  <li>Fügen Sie Videos hinzu und wählen Sie <strong>Gesichter und Kennzeichen</strong>, <strong>Nur Gesichter</strong> oder <strong>Nur Kennzeichen</strong>.</li>
+  <li>Spielen Sie das Video ab. Entfernen Sie den Haken bei Personen, die sichtbar bleiben sollen. Zeichnen Sie einen Rahmen, wenn etwas übersehen wurde.</li>
+  <li>Klicken Sie auf <strong>Alle verarbeiten</strong>.</li>
+</ol>
+<h3>Personen behalten</h3>
+<ol>
+  <li>Wählen Sie <strong>Personen behalten</strong> und öffnen Sie ein Video.</li>
+  <li>Klicken Sie jedes Gesicht an, das sichtbar bleiben soll. Ein grüner Rahmen markiert es.</li>
+  <li>Klicken Sie auf <strong>Dieses Video verarbeiten</strong>.</li>
+</ol>
+<h2 id="de-window">Das Fenster</h2>
+<ul>
+  <li><strong>Links:</strong> Dateiliste und Auftrag.</li>
+  <li><strong>Mitte:</strong> Vorschau, Rahmenwerkzeuge und Zeitleiste.</li>
+  <li><strong>Rechts:</strong> erkannte Gesichter und Kennzeichen sowie gezeichnete Rahmen.</li>
+  <li><strong>Oben:</strong> Verarbeiten, Ihr Tarif und die Sprachschaltfläche.</li>
+</ul>
+<p>Wiedergabe ist nur eine Vorschau. Sie maskiert nichts und speichert nichts.</p>
+<h2 id="de-files">Videos hinzufügen</h2>
+<ul>
+  <li><strong>Datei &gt; Öffnen</strong> oder ein Klick auf die leere Vorschau öffnet ein Video.</li>
+  <li><strong>Datei &gt; Zur Dateiliste</strong> oder <strong>Hinzufügen</strong> nimmt ein oder mehrere Videos auf.</li>
+  <li>Ziehen Sie ein Video auf das Fenster, um es hinzuzufügen und zu öffnen. Mehrere Dateien oder einen Ordner ziehen Sie auf die Dateiliste. Ein Ordner nimmt nur Videos in diesem Ordner auf, nicht in Unterordnern.</li>
+  <li>Doppelklicken Sie eine Zeile, um sie zu öffnen.</li>
+</ul>
+<p>Erkannt werden MP4, AVI, MOV, MKV, WMV, M4V, WebM, MPG und MPEG. Der Dateidialog zeigt die üblichen Formate. Für den Rest wählen Sie <strong>All files</strong>.</p>
+<p><strong>Entfernen</strong>, <strong>Erledigte löschen</strong> und <strong>Alle löschen</strong> ändern nur die Liste. Dateien auf der Festplatte bleiben erhalten.</p>
+<h2 id="de-jobs">Auftrag wählen</h2>
+<h3>Alles schwärzen</h3>
+<p>Jedes erkannte Gesicht und Kennzeichen wird maskiert, danach die wartende Liste verarbeitet. Ein Haken rechts bedeutet: wird maskiert. Ohne Haken bleibt die Person oder das Kennzeichen in diesem Video sichtbar.</p>
+<h3>Personen behalten</h3>
+<p>Damit bleiben bestimmte Personen sichtbar und alle anderen werden maskiert. Klicken Sie ein Gesicht in der Vorschau an. Ziehen Sie durch das Video, um dieselbe Person später wiederzuerkennen. Wenn das Programm fragt, wählen Sie <strong>Dieselbe Person</strong> oder <strong>Nicht diese Person</strong>.</p>
+<p><strong>Kennzeichen ebenfalls schwärzen</strong> ist standardmäßig an. Schalten Sie es aus, wenn Kennzeichen sichtbar bleiben sollen. Die Wahl gilt nur für die aktuelle Datei. Ein Wechsel zurück zu <strong>Alles schwärzen</strong> verwirft die behaltenen Personen in diesem Video.</p>
+<p class="note">Eine leere Erkennungsliste vor dem Abspielen ist normal. Der Export prüft die Datei trotzdem vollständig.</p>
+<h2 id="de-review">Erkennungen prüfen</h2>
+<p>Spielen Sie ab oder ziehen Sie die Zeitleiste. Erkennungen erscheinen rechts, während Sie durch das Video gehen.</p>
+<ul>
+  <li><span class="swatch g"></span>Grüne Rahmen bleiben sichtbar. Sie gehören zu <strong>Personen behalten</strong>.</li>
+  <li>Bei <strong>Alles schwärzen</strong> werden markierte Zeilen maskiert. Nicht markierte bleiben in diesem Video sichtbar.</li>
+</ul>
+<h2 id="de-boxes">Rahmen zeichnen</h2>
+<p>Zeichnen Sie nur dann einen Rahmen, wenn die Erkennung ein Gesicht, ein Kennzeichen oder einen anderen Bereich wie einen Ausweis oder einen Bildschirm übersehen hat.</p>
+<ul>
+  <li><span class="swatch b"></span><strong>Rahmen und folgen</strong> verfolgt den Bereich. Der Export maskiert ihn.</li>
+  <li><span class="swatch p"></span><strong>Rahmen und fixieren</strong> bleibt bis zum Videoende an derselben Stelle. Der Export maskiert ihn.</li>
+</ul>
+<p>Halten Sie an einem klaren Bild an, wählen Sie das Werkzeug und ziehen Sie ein Rechteck in der Vorschau. Beide Werkzeuge gibt es in beiden Aufträgen.</p>
+<h2 id="de-style">Maskenstil</h2>
+<p><strong>Bearbeiten &gt; Maskenstil</strong>:</p>
+<ul>
+  <li><strong>Mosaik</strong></li>
+  <li><strong>Weichzeichnen</strong></li>
+  <li><strong>Vollfarbe</strong></li>
+</ul>
+<p>Alle drei ersetzen die Pixel in der Exportdatei. Es ist keine Ebene, die ein Player oder ein Schnittprogramm später abschalten kann. Die Originaldatei bleibt unverändert.</p>
+<h2 id="de-preview">Vorschau</h2>
+<ul>
+  <li>Ziehen Sie den Filmstreifen, um sich im Video zu bewegen.</li>
+  <li>Die Schaltfläche zum Vergrößern blendet die Seitenleisten aus. Esc stellt sie wieder her.</li>
+  <li>Die Zeitanzeige ist Stunden, Minuten, Sekunden und Bilder.</li>
+</ul>
+<h2 id="de-export">Export</h2>
+<p>Die Schaltfläche heißt je nach Auftrag <strong>Alle verarbeiten</strong> oder <strong>Dieses Video verarbeiten</strong>.</p>
+<ul>
+  <li><strong>Ein Video:</strong> Sie wählen den Speicherort. Der vorgeschlagene Name endet auf <code>_redacted.mp4</code>.</li>
+  <li><strong>Mehrere Videos:</strong> Pro und Annual verarbeiten die wartende Liste. Jede Datei liegt neben dem Original als <code>*_redacted.mp4</code>. Existiert der Name schon, wird eine Zahl angehängt. Vor dem Stapel kommt eine Bestätigung.</li>
+  <li>Erledigte Zeilen werden übersprungen. Entfernen Sie ein fertiges Video und fügen Sie es erneut hinzu, wenn Sie noch einmal exportieren wollen.</li>
+  <li>Das Fenster bleibt gesperrt, bis die Verarbeitung endet. Sie können abbrechen.</li>
+  <li>Ein Video, das länger ist als Ihr Tarif erlaubt, wird als <strong>Zu lang</strong> markiert und nicht exportiert.</li>
+</ul>
+<p>Kostenlose Exporte tragen das Wasserzeichen „Created with videoredaction.io“. Bezahlte Exporte nicht. Das Ergebnis ist eine H.264-MP4.</p>
+<h2 id="de-account">Konto und Tarife</h2>
+<p>Die Schaltfläche zeigt den Tarifnamen auf Englisch: Free, Basic, Pro oder Annual.</p>
+<table>
+  <thead><tr><th>Tarif</th><th>Leistung</th></tr></thead>
+  <tbody>
+    <tr><td>Free</td><td>Kein Konto. Ein Video nach dem anderen, bis 10 Minuten, mit Wasserzeichen.</td></tr>
+    <tr><td>Basic</td><td>1 Gerät. Ein Video nach dem anderen, bis 10 Minuten, ohne Wasserzeichen.</td></tr>
+    <tr><td>Pro</td><td>Bis zu 2 Geräte. Stapelverarbeitung, unbegrenzte Länge, ohne Wasserzeichen.</td></tr>
+    <tr><td>Annual</td><td>Dieselben Funktionen wie Pro, jährlich abgerechnet.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>Konto &gt; Konto</strong> zeigt Tarif, E-Mail und Hardware-ID. Kopieren Sie die ID, wenn der Support sie braucht.</li>
+  <li><strong>Anmelden</strong> öffnet den Browser und bringt die Lizenz auf diesen PC zurück. <strong>Upgrade</strong> öffnet die Preisseite.</li>
+  <li><strong>Abmelden</strong> setzt diesen PC auf Free zurück. Das Gerät bleibt im Konto, bis Sie es auf der Website entfernen.</li>
+  <li>Wenn die Anmeldung meldet, dass das Gerätelimit voll ist, entfernen Sie einen Computer auf der Website und melden Sie sich erneut an.</li>
+</ul>
+<p>Nach Installation und Aktivierung läuft die Verarbeitung ohne Internet. Anmeldung und Upgrade brauchen das Netz.</p>
+<h2 id="de-settings">GPU und Sprache</h2>
+<p><strong>Bearbeiten &gt; Einstellungen</strong> fragt, ob die GPU (DirectML) verwendet werden soll. Startet die GPU nicht, nutzt die Engine die CPU und ist deutlich langsamer. Die Beschriftung rechts in der Verarbeitungsleiste zeigt, was gerade läuft.</p>
+<p>Die Sprachschaltfläche oben rechts wird auf diesem PC gespeichert. Dieses Handbuch öffnet sich in derselben Sprache.</p>
+<p>Windows 10 oder 11, 64-Bit. CPU mit AVX2. 4 GB RAM, 8 GB empfohlen. Etwa 1 GB freier Speicherplatz.</p>
+<h2 id="de-keys">Tasten</h2>
+<table>
+  <thead><tr><th>Taste</th><th>Aktion</th></tr></thead>
+  <tbody>
+    <tr><td><span class="key">Left</span> / <span class="key">Right</span></td><td>Ein Bild vor oder zurück</td></tr>
+    <tr><td><span class="key">Shift</span> + Pfeile</td><td>Etwa eine Sekunde vor oder zurück</td></tr>
+    <tr><td><span class="key">Home</span> / <span class="key">End</span></td><td>Zum Anfang oder zum Ende</td></tr>
+    <tr><td><span class="key">Ctrl</span> + Rad auf der Zeitleiste</td><td>Zeitleiste zoomen. Das Rad allein verschiebt sie.</td></tr>
+    <tr><td><span class="key">Esc</span></td><td>Vergrößerte Vorschau verlassen</td></tr>
+    <tr><td><span class="key">F8</span></td><td>Ordner zur Erkennungsdiagnose speichern. Siehe unten.</td></tr>
+  </tbody>
+</table>
+<h2 id="de-trouble">Wenn etwas nicht stimmt</h2>
+<ul>
+  <li><strong>Das Video öffnet sich nicht.</strong> Versuchen Sie eine andere Datei oder wandeln Sie sie in MP4 um.</li>
+  <li><strong>Die Erkennungsliste ist leer.</strong> Spielen Sie ab oder ziehen Sie die Zeitleiste. Der Export prüft die Datei trotzdem.</li>
+  <li><strong>Ein Gesicht oder Kennzeichen fehlt.</strong> Zeichnen Sie <strong>Rahmen und folgen</strong> oder <strong>Rahmen und fixieren</strong>.</li>
+  <li><strong>Die falsche Person bleibt sichtbar.</strong> Klicken Sie bei Personen behalten das richtige Gesicht an. Wählen Sie <strong>Nicht diese Person</strong>, wenn die Zuordnung falsch ist.</li>
+  <li><strong>Zu lang.</strong> Kürzen Sie das Video oder nutzen Sie Pro oder Annual.</li>
+  <li><strong>Der Stapel ist gesperrt.</strong> Free und Basic verarbeiten ein Video nach dem anderen.</li>
+  <li><strong>Anmeldung fehlgeschlagen.</strong> Prüfen Sie das Netz. Ist das Gerätelimit voll, entfernen Sie einen PC auf der Website.</li>
+  <li><strong>Die Verarbeitung ist langsam.</strong> Wählen Sie in den Einstellungen die GPU, wenn sie verfügbar ist.</li>
+  <li><strong>Ein Bild sieht falsch aus.</strong> Halten Sie dort an und wählen Sie <strong>Hilfe &gt; Erkennung protokollieren (F8)</strong>. Der Ordner enthält <code>frame.png</code>, <code>overlay.png</code> und <code>report.txt</code>.</li>
+</ul>
+<h2 id="de-limits">Bevor Sie sich darauf verlassen</h2>
+<p>Sehen Sie die Exportdatei selbst an. Die Erkennung kann ein Gesicht oder Kennzeichen verpassen, wenn es klein, abgewandt, unscharf oder verdeckt ist. Die neue Datei ersetzt diese Pixel. Sie ändert das Original nicht und entscheidet nicht, ob das Ergebnis einem Gesetz, einem Gerichtsbeschluss oder einer Firmenregel entspricht.</p>
+<footer>Video Blackout · videoredaction.io</footer>
+</div>
+</div>
+</article>
+
+<article id="fr" lang="fr" data-title="Guide d'utilisation de Video Blackout" data-sub="Guide d'utilisation">
+<div class="wrap">
+<nav class="toc">
+  <a href="#fr-start">Démarrage</a>
+  <a href="#fr-window">La fenêtre</a>
+  <a href="#fr-files">Ajouter des vidéos</a>
+  <a href="#fr-jobs">Choisir la tâche</a>
+  <a href="#fr-review">Vérifier les détections</a>
+  <a href="#fr-boxes">Tracer un cadre</a>
+  <a href="#fr-style">Style de masque</a>
+  <a href="#fr-preview">Aperçu</a>
+  <a href="#fr-export">Export</a>
+  <a href="#fr-account">Compte et offres</a>
+  <a href="#fr-settings">GPU et langue</a>
+  <a href="#fr-keys">Raccourcis</a>
+  <a href="#fr-trouble">En cas de problème</a>
+  <a href="#fr-limits">Avant de vous y fier</a>
+</nav>
+<div>
+<h1>Guide d'utilisation</h1>
+<p class="lead">Masquez les visages et les plaques sur votre PC. La vidéo n'est pas envoyée en ligne. L'export écrit un nouveau MP4 et laisse le fichier d'origine intact.</p>
+<h2 id="fr-start">Démarrage</h2>
+<h3>Tout masquer</h3>
+<ol>
+  <li>Choisissez <strong>Tout masquer</strong>.</li>
+  <li>Ajoutez des vidéos, puis choisissez <strong>Visages et plaques</strong>, <strong>Visages seulement</strong> ou <strong>Plaques seulement</strong>.</li>
+  <li>Lancez la vidéo. Décochez les personnes qui doivent rester visibles. Tracez un cadre si la détection a manqué quelque chose.</li>
+  <li>Cliquez sur <strong>Tout traiter</strong>.</li>
+</ol>
+<h3>Garder des personnes</h3>
+<ol>
+  <li>Choisissez <strong>Garder des personnes</strong> et ouvrez une vidéo.</li>
+  <li>Cliquez chaque visage qui doit rester visible. Un cadre vert le marque.</li>
+  <li>Cliquez sur <strong>Traiter cette vidéo</strong>.</li>
+</ol>
+<h2 id="fr-window">La fenêtre</h2>
+<ul>
+  <li><strong>À gauche :</strong> la liste des fichiers et la tâche.</li>
+  <li><strong>Au centre :</strong> l'aperçu, les outils de cadre et la timeline.</li>
+  <li><strong>À droite :</strong> les visages et plaques détectés, plus les cadres que vous avez tracés.</li>
+  <li><strong>En haut :</strong> Traiter, votre offre et le bouton de langue.</li>
+</ul>
+<p>La lecture est seulement un aperçu. Elle ne masque rien et n'enregistre rien.</p>
+<h2 id="fr-files">Ajouter des vidéos</h2>
+<ul>
+  <li><strong>Fichier &gt; Ouvrir</strong>, ou un clic sur l'aperçu vide, ouvre une vidéo.</li>
+  <li><strong>Fichier &gt; Ajouter à la liste</strong>, ou <strong>Ajouter</strong>, ajoute une ou plusieurs vidéos.</li>
+  <li>Déposez une vidéo sur la fenêtre pour l'ajouter et l'ouvrir. Déposez plusieurs fichiers, ou un dossier, sur la liste. Un dossier n'ajoute que les vidéos de ce dossier, pas celles des sous-dossiers.</li>
+  <li>Double-cliquez une ligne pour l'ouvrir.</li>
+</ul>
+<p>Formats acceptés : MP4, AVI, MOV, MKV, WMV, M4V, WebM, MPG et MPEG. La boîte de dialogue liste les formats courants. Choisissez <strong>All files</strong> pour les autres.</p>
+<p><strong>Retirer</strong>, <strong>Effacer les terminés</strong> et <strong>Tout effacer</strong> ne modifient que la liste. Ils ne suppriment pas les fichiers sur le disque.</p>
+<h2 id="fr-jobs">Choisir la tâche</h2>
+<h3>Tout masquer</h3>
+<p>Masque chaque visage et chaque plaque détectés, puis traite la liste en attente. À droite, un élément coché est masqué. Décochez-le pour laisser cette personne ou cette plaque visible dans cette vidéo.</p>
+<h3>Garder des personnes</h3>
+<p>Utilisez cette tâche quand certaines personnes doivent rester visibles et que les autres doivent être masquées. Cliquez un visage dans l'aperçu. Faites défiler la vidéo pour voir la même personne reconnue plus loin. Si le logiciel demande, choisissez <strong>Même personne</strong> ou <strong>Pas elle</strong>.</p>
+<p><strong>Masquer aussi les plaques</strong> est activé par défaut. Désactivez-le si les plaques doivent rester visibles. Ce choix ne concerne que le fichier ouvert. Revenir à <strong>Tout masquer</strong> abandonne les personnes gardées sur cette vidéo.</p>
+<p class="note">Une liste de détections vide avant la lecture est normale. L'export analyse quand même tout le fichier.</p>
+<h2 id="fr-review">Vérifier les détections</h2>
+<p>Lancez la lecture ou faites glisser la timeline. Les détections apparaissent à droite au fil de la vidéo.</p>
+<ul>
+  <li><span class="swatch g"></span>Les cadres verts restent visibles. Ils appartiennent à <strong>Garder des personnes</strong>.</li>
+  <li>Dans <strong>Tout masquer</strong>, les lignes cochées sont masquées. Les lignes décochées restent visibles dans cette vidéo.</li>
+</ul>
+<h2 id="fr-boxes">Tracer un cadre</h2>
+<p>Tracez un cadre seulement si la détection a manqué un visage, une plaque, ou une autre zone comme un badge ou un écran.</p>
+<ul>
+  <li><span class="swatch b"></span><strong>Cadre et suivi</strong> suit la zone quand elle bouge. L'export la masque.</li>
+  <li><span class="swatch p"></span><strong>Cadre fixe</strong> reste au même endroit jusqu'à la fin de la vidéo. L'export le masque.</li>
+</ul>
+<p>Mettez en pause sur une image nette, choisissez l'outil, puis tracez un rectangle dans l'aperçu. Les deux outils existent dans les deux tâches.</p>
+<h2 id="fr-style">Style de masque</h2>
+<p><strong>Édition &gt; Style de masque</strong> :</p>
+<ul>
+  <li><strong>Mosaïque</strong></li>
+  <li><strong>Flou</strong></li>
+  <li><strong>Couleur unie</strong></li>
+</ul>
+<p>Les trois remplacent les pixels du fichier exporté. Ce n'est pas un calque qu'un lecteur ou un logiciel de montage peut retirer ensuite. Le fichier d'origine n'est pas modifié.</p>
+<h2 id="fr-preview">Aperçu</h2>
+<ul>
+  <li>Faites glisser la pellicule pour avancer dans la vidéo.</li>
+  <li>Le bouton d'agrandissement cache les panneaux latéraux. Échap les rétablit.</li>
+  <li>L'heure affichée est en heures, minutes, secondes et images.</li>
+</ul>
+<h2 id="fr-export">Export</h2>
+<p>Le bouton s'appelle <strong>Tout traiter</strong> ou <strong>Traiter cette vidéo</strong>, selon la tâche.</p>
+<ul>
+  <li><strong>Une vidéo :</strong> choisissez l'emplacement. Le nom proposé se termine par <code>_redacted.mp4</code>.</li>
+  <li><strong>Plusieurs vidéos :</strong> Pro et Annual traitent la liste en attente. Chaque fichier est enregistré à côté de l'original sous le nom <code>*_redacted.mp4</code>. Si ce nom existe, un numéro est ajouté. Une confirmation précède le lot.</li>
+  <li>Les lignes terminées sont ignorées. Retirez une vidéo terminée et ajoutez-la de nouveau pour un autre export.</li>
+  <li>La fenêtre reste verrouillée jusqu'à la fin. Vous pouvez annuler.</li>
+  <li>Une vidéo plus longue que votre offre est marquée <strong>Trop long</strong> et n'est pas exportée.</li>
+</ul>
+<p>Les exports gratuits portent le filigrane « Created with videoredaction.io ». Les exports payants n'en ont pas. Le résultat est un MP4 H.264.</p>
+<h2 id="fr-account">Compte et offres</h2>
+<p>Le bouton affiche le nom de l'offre en anglais : Free, Basic, Pro ou Annual.</p>
+<table>
+  <thead><tr><th>Offre</th><th>Ce que vous obtenez</th></tr></thead>
+  <tbody>
+    <tr><td>Free</td><td>Sans compte. Une vidéo à la fois, jusqu'à 10 minutes, avec filigrane.</td></tr>
+    <tr><td>Basic</td><td>1 appareil. Une vidéo à la fois, jusqu'à 10 minutes, sans filigrane.</td></tr>
+    <tr><td>Pro</td><td>Jusqu'à 2 appareils. Traitement par lot, durée illimitée, sans filigrane.</td></tr>
+    <tr><td>Annual</td><td>Les mêmes fonctions que Pro, facturées à l'année.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>Compte &gt; Compte</strong> affiche l'offre, l'e-mail et l'identifiant matériel. Copiez-le si l'assistance le demande.</li>
+  <li><strong>Connexion</strong> ouvre le navigateur, puis renvoie la licence sur ce PC. <strong>Mettre à niveau</strong> ouvre la page des tarifs.</li>
+  <li><strong>Déconnexion</strong> remet ce PC sur Free. L'appareil reste sur le compte jusqu'à ce que vous le retiriez sur le site.</li>
+  <li>Si la connexion indique que la limite d'appareils est atteinte, retirez un ordinateur sur le site, puis reconnectez-vous.</li>
+</ul>
+<p>Après l'installation et l'activation, le traitement fonctionne sans Internet. La connexion et la mise à niveau ont besoin du réseau.</p>
+<h2 id="fr-settings">GPU et langue</h2>
+<p><strong>Édition &gt; Paramètres</strong> demande d'utiliser le GPU (DirectML). Si le GPU ne démarre pas, le moteur passe au CPU et devient beaucoup plus lent. Le libellé à droite de la barre de traitement indique lequel est utilisé.</p>
+<p>Le bouton de langue en haut à droite est mémorisé sur ce PC. Ce guide s'ouvre dans la même langue.</p>
+<p>Windows 10 ou 11, 64 bits. Un processeur avec AVX2. 4 Go de RAM, 8 Go recommandés. Environ 1 Go d'espace disque libre.</p>
+<h2 id="fr-keys">Raccourcis</h2>
+<table>
+  <thead><tr><th>Touche</th><th>Action</th></tr></thead>
+  <tbody>
+    <tr><td><span class="key">Left</span> / <span class="key">Right</span></td><td>Avancer ou reculer d'une image</td></tr>
+    <tr><td><span class="key">Shift</span> + flèches</td><td>Environ une seconde</td></tr>
+    <tr><td><span class="key">Home</span> / <span class="key">End</span></td><td>Aller au début ou à la fin</td></tr>
+    <tr><td><span class="key">Ctrl</span> + molette sur la timeline</td><td>Zoom de la timeline. La molette seule la fait défiler.</td></tr>
+    <tr><td><span class="key">Esc</span></td><td>Quitter l'aperçu agrandi</td></tr>
+    <tr><td><span class="key">F8</span></td><td>Enregistrer un dossier de diagnostic. Voir plus bas.</td></tr>
+  </tbody>
+</table>
+<h2 id="fr-trouble">En cas de problème</h2>
+<ul>
+  <li><strong>La vidéo ne s'ouvre pas.</strong> Essayez un autre fichier, ou convertissez-le en MP4.</li>
+  <li><strong>La liste de détections est vide.</strong> Lancez la lecture ou faites défiler. L'export analyse quand même le fichier.</li>
+  <li><strong>Un visage ou une plaque a été manqué.</strong> Tracez <strong>Cadre et suivi</strong> ou <strong>Cadre fixe</strong>.</li>
+  <li><strong>La mauvaise personne reste visible.</strong> Dans Garder des personnes, cliquez le bon visage. Choisissez <strong>Pas elle</strong> si l'association est fausse.</li>
+  <li><strong>Trop long.</strong> Raccourcissez la vidéo, ou passez à Pro ou Annual.</li>
+  <li><strong>Le lot est bloqué.</strong> Free et Basic traitent une vidéo à la fois.</li>
+  <li><strong>La connexion a échoué.</strong> Vérifiez le réseau. Si la limite d'appareils est pleine, retirez un PC sur le site.</li>
+  <li><strong>Le traitement est lent.</strong> Dans les paramètres, choisissez le GPU lorsqu'il est disponible.</li>
+  <li><strong>Une image semble fausse.</strong> Mettez en pause, puis utilisez <strong>Aide &gt; Enregistrer le diagnostic (F8)</strong>. Le dossier contient <code>frame.png</code>, <code>overlay.png</code> et <code>report.txt</code>.</li>
+</ul>
+<h2 id="fr-limits">Avant de vous y fier</h2>
+<p>Regardez vous-même le fichier exporté. La détection peut manquer un visage ou une plaque s'il est petit, de profil, flou ou caché. Le nouveau fichier remplace ces pixels. Il ne modifie pas l'original et ne décide pas si le résultat respecte une loi, une décision de justice ou une règle interne.</p>
+<footer>Video Blackout · videoredaction.io</footer>
+</div>
+</div>
+</article>
+
+<article id="es" lang="es" data-title="Guía de uso de Video Blackout" data-sub="Guía de uso">
+<div class="wrap">
+<nav class="toc">
+  <a href="#es-start">Inicio rápido</a>
+  <a href="#es-window">La ventana</a>
+  <a href="#es-files">Añadir vídeos</a>
+  <a href="#es-jobs">Elegir la tarea</a>
+  <a href="#es-review">Revisar detecciones</a>
+  <a href="#es-boxes">Dibujar un recuadro</a>
+  <a href="#es-style">Estilo de máscara</a>
+  <a href="#es-preview">Vista previa</a>
+  <a href="#es-export">Exportar</a>
+  <a href="#es-account">Cuenta y planes</a>
+  <a href="#es-settings">GPU e idioma</a>
+  <a href="#es-keys">Atajos</a>
+  <a href="#es-trouble">Si algo falla</a>
+  <a href="#es-limits">Antes de fiarte del resultado</a>
+</nav>
+<div>
+<h1>Guía de uso</h1>
+<p class="lead">Oculta rostros y matrículas en tu PC. El vídeo no se sube. La exportación crea un MP4 nuevo y deja el archivo original como está.</p>
+<h2 id="es-start">Inicio rápido</h2>
+<h3>Ocultar todo</h3>
+<ol>
+  <li>Elige <strong>Ocultar todo</strong>.</li>
+  <li>Añade vídeos y elige <strong>Rostros y matrículas</strong>, <strong>Solo rostros</strong> o <strong>Solo matrículas</strong>.</li>
+  <li>Reproduce el vídeo. Quita la marca de quien deba verse. Dibuja un recuadro si la detección omitió algo.</li>
+  <li>Pulsa <strong>Procesar todo</strong>.</li>
+</ol>
+<h3>Conservar personas</h3>
+<ol>
+  <li>Elige <strong>Conservar personas</strong> y abre un vídeo.</li>
+  <li>Haz clic en cada rostro que deba verse. Un recuadro verde lo marca.</li>
+  <li>Pulsa <strong>Procesar este vídeo</strong>.</li>
+</ol>
+<h2 id="es-window">La ventana</h2>
+<ul>
+  <li><strong>Izquierda:</strong> la lista de archivos y la tarea.</li>
+  <li><strong>Centro:</strong> la vista previa, las herramientas de recuadro y la línea de tiempo.</li>
+  <li><strong>Derecha:</strong> rostros y matrículas detectados, y los recuadros que dibujaste.</li>
+  <li><strong>Arriba:</strong> Procesar, tu plan y el botón de idioma.</li>
+</ul>
+<p>Reproducir solo muestra una vista previa. No oculta ni guarda nada.</p>
+<h2 id="es-files">Añadir vídeos</h2>
+<ul>
+  <li><strong>Archivo &gt; Abrir</strong>, o un clic en la vista previa vacía, abre un vídeo.</li>
+  <li><strong>Archivo &gt; Añadir a la lista</strong>, o <strong>Añadir</strong>, agrega uno o varios vídeos.</li>
+  <li>Suelta un vídeo sobre la ventana para añadirlo y abrirlo. Suelta varios archivos, o una carpeta, sobre la lista. Una carpeta solo añade los vídeos de esa carpeta, no los de las subcarpetas.</li>
+  <li>Haz doble clic en una fila para abrirla.</li>
+</ul>
+<p>Formatos: MP4, AVI, MOV, MKV, WMV, M4V, WebM, MPG y MPEG. El cuadro de diálogo lista los habituales. Elige <strong>All files</strong> para el resto.</p>
+<p><strong>Quitar</strong>, <strong>Borrar hechos</strong> y <strong>Borrar todo</strong> solo cambian la lista. No borran archivos del disco.</p>
+<h2 id="es-jobs">Elegir la tarea</h2>
+<h3>Ocultar todo</h3>
+<p>Oculta cada rostro y matrícula detectados y luego procesa la lista en espera. A la derecha, un elemento marcado se oculta. Quita la marca para dejar a esa persona o matrícula visible en este vídeo.</p>
+<h3>Conservar personas</h3>
+<p>Úsalo cuando unas personas deban verse y el resto deba ocultarse. Haz clic en un rostro de la vista previa. Recorre el vídeo para ver a la misma persona más adelante. Si el programa pregunta, elige <strong>Misma persona</strong> o <strong>No es</strong>.</p>
+<p><strong>Ocultar también las matrículas</strong> está activado por defecto. Desactívalo si las matrículas deben verse. La elección solo vale para el archivo actual. Volver a <strong>Ocultar todo</strong> descarta las personas conservadas en este vídeo.</p>
+<p class="note">Una lista de detecciones vacía antes de reproducir es normal. La exportación igual analiza todo el archivo.</p>
+<h2 id="es-review">Revisar detecciones</h2>
+<p>Reproduce o arrastra la línea de tiempo. Las detecciones aparecen a la derecha a medida que avanzas.</p>
+<ul>
+  <li><span class="swatch g"></span>Los recuadros verdes quedan visibles. Pertenecen a <strong>Conservar personas</strong>.</li>
+  <li>En <strong>Ocultar todo</strong>, las filas marcadas se ocultan. Las que no, quedan visibles en este vídeo.</li>
+</ul>
+<h2 id="es-boxes">Dibujar un recuadro</h2>
+<p>Dibuja un recuadro solo si la detección omitió un rostro, una matrícula u otra zona, como una credencial o una pantalla.</p>
+<ul>
+  <li><span class="swatch b"></span><strong>Recuadro y seguir</strong> sigue la zona cuando se mueve. La exportación la oculta.</li>
+  <li><span class="swatch p"></span><strong>Recuadro fijo</strong> se queda en el mismo sitio hasta el final del vídeo. La exportación lo oculta.</li>
+</ul>
+<p>Pausa en un fotograma claro, elige la herramienta y arrastra un rectángulo en la vista previa. Las dos herramientas están en ambas tareas.</p>
+<h2 id="es-style">Estilo de máscara</h2>
+<p><strong>Editar &gt; Estilo de máscara</strong>:</p>
+<ul>
+  <li><strong>Mosaico</strong></li>
+  <li><strong>Desenfoque</strong></li>
+  <li><strong>Color sólido</strong></li>
+</ul>
+<p>Las tres sustituyen los píxeles del archivo exportado. No es una capa que un reproductor o un editor pueda quitar después. El archivo original no cambia.</p>
+<h2 id="es-preview">Vista previa</h2>
+<ul>
+  <li>Arrastra la tira de fotogramas para moverte por el vídeo.</li>
+  <li>El botón de ampliar oculta los paneles laterales. Esc los devuelve.</li>
+  <li>El tiempo se muestra en horas, minutos, segundos y fotogramas.</li>
+</ul>
+<h2 id="es-export">Exportar</h2>
+<p>El botón dice <strong>Procesar todo</strong> o <strong>Procesar este vídeo</strong>, según la tarea.</p>
+<ul>
+  <li><strong>Un vídeo:</strong> elige dónde guardarlo. El nombre sugerido termina en <code>_redacted.mp4</code>.</li>
+  <li><strong>Varios vídeos:</strong> Pro y Annual procesan la lista en espera. Cada archivo se guarda junto al original como <code>*_redacted.mp4</code>. Si ese nombre existe, se añade un número. Hay una confirmación antes del lote.</li>
+  <li>Las filas hechas se omiten. Quita un vídeo terminado y vuelve a añadirlo si necesitas otra exportación.</li>
+  <li>La ventana permanece bloqueada hasta que termina. Puedes cancelar.</li>
+  <li>Un vídeo más largo de lo que permite tu plan se marca como <strong>Demasiado largo</strong> y no se exporta.</li>
+</ul>
+<p>Las exportaciones gratuitas llevan la marca de agua “Created with videoredaction.io”. Las de pago no. El resultado es un MP4 H.264.</p>
+<h2 id="es-account">Cuenta y planes</h2>
+<p>El botón muestra el nombre del plan en inglés: Free, Basic, Pro o Annual.</p>
+<table>
+  <thead><tr><th>Plan</th><th>Qué incluye</th></tr></thead>
+  <tbody>
+    <tr><td>Free</td><td>Sin cuenta. Un vídeo cada vez, hasta 10 minutos, con marca de agua.</td></tr>
+    <tr><td>Basic</td><td>1 dispositivo. Un vídeo cada vez, hasta 10 minutos, sin marca de agua.</td></tr>
+    <tr><td>Pro</td><td>Hasta 2 dispositivos. Proceso por lotes, duración ilimitada, sin marca de agua.</td></tr>
+    <tr><td>Annual</td><td>Las mismas funciones que Pro, con pago anual.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>Cuenta &gt; Cuenta</strong> muestra el plan, el correo y el identificador de hardware. Cópialo si soporte lo pide.</li>
+  <li><strong>Iniciar sesión</strong> abre el navegador y devuelve la licencia a este PC. <strong>Mejorar plan</strong> abre la página de precios.</li>
+  <li><strong>Cerrar sesión</strong> deja este PC en Free. El dispositivo sigue en la cuenta hasta que lo quites en el sitio web.</li>
+  <li>Si el inicio de sesión dice que el límite de dispositivos está lleno, quita un ordenador en el sitio y vuelve a entrar.</li>
+</ul>
+<p>Tras instalar y activar, el proceso funciona sin internet. El inicio de sesión y la mejora de plan necesitan red.</p>
+<h2 id="es-settings">GPU e idioma</h2>
+<p><strong>Editar &gt; Ajustes</strong> pregunta si usar la GPU (DirectML). Si la GPU no arranca, el motor usa la CPU y va mucho más lento. La etiqueta a la derecha de la barra de proceso indica cuál se está usando.</p>
+<p>El botón de idioma de arriba a la derecha se recuerda en este PC. Esta guía se abre en el mismo idioma.</p>
+<p>Windows 10 u 11, de 64 bits. CPU con AVX2. 4 GB de RAM, 8 GB recomendados. Unos 1 GB de espacio libre.</p>
+<h2 id="es-keys">Atajos</h2>
+<table>
+  <thead><tr><th>Tecla</th><th>Acción</th></tr></thead>
+  <tbody>
+    <tr><td><span class="key">Left</span> / <span class="key">Right</span></td><td>Un fotograma adelante o atrás</td></tr>
+    <tr><td><span class="key">Shift</span> + flechas</td><td>Unos un segundo</td></tr>
+    <tr><td><span class="key">Home</span> / <span class="key">End</span></td><td>Ir al inicio o al final</td></tr>
+    <tr><td><span class="key">Ctrl</span> + rueda en la línea de tiempo</td><td>Ampliar la línea de tiempo. La rueda sola la desplaza.</td></tr>
+    <tr><td><span class="key">Esc</span></td><td>Salir de la vista previa ampliada</td></tr>
+    <tr><td><span class="key">F8</span></td><td>Guardar una carpeta de depuración. Ver más abajo.</td></tr>
+  </tbody>
+</table>
+<h2 id="es-trouble">Si algo falla</h2>
+<ul>
+  <li><strong>El vídeo no se abre.</strong> Prueba otro archivo o conviértelo a MP4.</li>
+  <li><strong>La lista de detecciones está vacía.</strong> Reproduce o recorre el vídeo. La exportación igual analiza el archivo.</li>
+  <li><strong>Faltó un rostro o una matrícula.</strong> Dibuja <strong>Recuadro y seguir</strong> o <strong>Recuadro fijo</strong>.</li>
+  <li><strong>Quedó visible la persona equivocada.</strong> En Conservar personas, haz clic en el rostro correcto. Elige <strong>No es</strong> si la coincidencia es errónea.</li>
+  <li><strong>Demasiado largo.</strong> Acorta el vídeo, o usa Pro o Annual.</li>
+  <li><strong>El lote está bloqueado.</strong> Free y Basic procesan un vídeo cada vez.</li>
+  <li><strong>Falló el inicio de sesión.</strong> Revisa la red. Si el límite de dispositivos está lleno, quita un PC en el sitio web.</li>
+  <li><strong>El proceso va lento.</strong> En Ajustes, elige la GPU cuando esté disponible.</li>
+  <li><strong>Un fotograma se ve mal.</strong> Pausa ahí y usa <strong>Ayuda &gt; Guardar depuración (F8)</strong>. La carpeta contiene <code>frame.png</code>, <code>overlay.png</code> y <code>report.txt</code>.</li>
+</ul>
+<h2 id="es-limits">Antes de fiarte del resultado</h2>
+<p>Revisa tú el archivo exportado. La detección puede omitir un rostro o una matrícula si es pequeño, está de lado, borroso o tapado. El archivo nuevo sustituye esos píxeles. No cambia el original y no decide si el resultado cumple una ley, una orden judicial o una norma de la empresa.</p>
+<footer>Video Blackout · videoredaction.io</footer>
+</div>
+</div>
+</article>
+
+<article id="pt-BR" lang="pt-BR" data-title="Guia de uso do Video Blackout" data-sub="Guia de uso">
+<div class="wrap">
+<nav class="toc">
+  <a href="#pt-start">Começo rápido</a>
+  <a href="#pt-window">A janela</a>
+  <a href="#pt-files">Adicionar vídeos</a>
+  <a href="#pt-jobs">Escolher a tarefa</a>
+  <a href="#pt-review">Revisar detecções</a>
+  <a href="#pt-boxes">Desenhar uma caixa</a>
+  <a href="#pt-style">Estilo da máscara</a>
+  <a href="#pt-preview">Prévia</a>
+  <a href="#pt-export">Exportar</a>
+  <a href="#pt-account">Conta e planos</a>
+  <a href="#pt-settings">GPU e idioma</a>
+  <a href="#pt-keys">Atalhos</a>
+  <a href="#pt-trouble">Se algo der errado</a>
+  <a href="#pt-limits">Antes de confiar no resultado</a>
+</nav>
+<div>
+<h1>Guia de uso</h1>
+<p class="lead">Oculte rostos e placas no seu PC. O vídeo não é enviado para a internet. A exportação grava um MP4 novo e deixa o arquivo original intacto.</p>
+<h2 id="pt-start">Começo rápido</h2>
+<h3>Ocultar tudo</h3>
+<ol>
+  <li>Escolha <strong>Ocultar tudo</strong>.</li>
+  <li>Adicione vídeos e escolha <strong>Rostos e placas</strong>, <strong>Somente rostos</strong> ou <strong>Somente placas</strong>.</li>
+  <li>Reproduza o vídeo. Desmarque quem deve continuar visível. Desenhe uma caixa se a detecção deixou algo passar.</li>
+  <li>Clique em <strong>Processar tudo</strong>.</li>
+</ol>
+<h3>Manter pessoas</h3>
+<ol>
+  <li>Escolha <strong>Manter pessoas</strong> e abra um vídeo.</li>
+  <li>Clique em cada rosto que deve ficar visível. Uma caixa verde marca essa pessoa.</li>
+  <li>Clique em <strong>Processar este vídeo</strong>.</li>
+</ol>
+<h2 id="pt-window">A janela</h2>
+<ul>
+  <li><strong>Esquerda:</strong> a lista de arquivos e a tarefa.</li>
+  <li><strong>Centro:</strong> a prévia, as ferramentas de caixa e a linha do tempo.</li>
+  <li><strong>Direita:</strong> rostos e placas detectados, e as caixas que você desenhou.</li>
+  <li><strong>Topo:</strong> Processar, seu plano e o botão de idioma.</li>
+</ul>
+<p>Reproduzir é só uma prévia. Não oculta e não salva nada.</p>
+<h2 id="pt-files">Adicionar vídeos</h2>
+<ul>
+  <li><strong>Arquivo &gt; Abrir</strong>, ou um clique na prévia vazia, abre um vídeo.</li>
+  <li><strong>Arquivo &gt; Adicionar à lista</strong>, ou <strong>Adicionar</strong>, inclui um ou mais vídeos.</li>
+  <li>Solte um vídeo na janela para adicioná-lo e abri-lo. Solte vários arquivos, ou uma pasta, na lista. Uma pasta inclui só os vídeos daquela pasta, não das subpastas.</li>
+  <li>Dê um clique duplo em uma linha para abri-la.</li>
+</ul>
+<p>Formatos: MP4, AVI, MOV, MKV, WMV, M4V, WebM, MPG e MPEG. A caixa de diálogo lista os mais comuns. Escolha <strong>All files</strong> para o restante.</p>
+<p><strong>Remover</strong>, <strong>Limpar concluídos</strong> e <strong>Limpar tudo</strong> mudam só a lista. Não apagam arquivos do disco.</p>
+<h2 id="pt-jobs">Escolher a tarefa</h2>
+<h3>Ocultar tudo</h3>
+<p>Oculta cada rosto e placa detectados e depois processa a lista em espera. À direita, um item marcado é ocultado. Desmarque para deixar essa pessoa ou placa visível neste vídeo.</p>
+<h3>Manter pessoas</h3>
+<p>Use quando algumas pessoas devem ficar visíveis e as outras devem ser ocultadas. Clique em um rosto na prévia. Percorra o vídeo para ver a mesma pessoa reconhecida mais adiante. Se o programa perguntar, escolha <strong>Mesma pessoa</strong> ou <strong>Não é ela</strong>.</p>
+<p><strong>Também ocultar placas</strong> fica ligado por padrão. Desligue se as placas devem continuar visíveis. A escolha vale só para o arquivo atual. Voltar para <strong>Ocultar tudo</strong> descarta as pessoas mantidas neste vídeo.</p>
+<p class="note">Uma lista de detecções vazia antes de reproduzir é normal. A exportação ainda analisa o arquivo inteiro.</p>
+<h2 id="pt-review">Revisar detecções</h2>
+<p>Reproduza ou arraste a linha do tempo. As detecções aparecem à direita conforme você avança.</p>
+<ul>
+  <li><span class="swatch g"></span>Caixas verdes ficam visíveis. Elas pertencem a <strong>Manter pessoas</strong>.</li>
+  <li>Em <strong>Ocultar tudo</strong>, as linhas marcadas são ocultadas. As desmarcadas ficam visíveis neste vídeo.</li>
+</ul>
+<h2 id="pt-boxes">Desenhar uma caixa</h2>
+<p>Desenhe uma caixa só se a detecção deixou passar um rosto, uma placa ou outra região, como um crachá ou uma tela.</p>
+<ul>
+  <li><span class="swatch b"></span><strong>Caixa e seguir</strong> acompanha a região quando ela se move. A exportação a oculta.</li>
+  <li><span class="swatch p"></span><strong>Caixa fixa</strong> fica no mesmo lugar até o fim do vídeo. A exportação a oculta.</li>
+</ul>
+<p>Pause em um quadro nítido, escolha a ferramenta e arraste um retângulo na prévia. As duas ferramentas existem nas duas tarefas.</p>
+<h2 id="pt-style">Estilo da máscara</h2>
+<p><strong>Editar &gt; Estilo da máscara</strong>:</p>
+<ul>
+  <li><strong>Mosaico</strong></li>
+  <li><strong>Desfoque</strong></li>
+  <li><strong>Cor sólida</strong></li>
+</ul>
+<p>As três substituem os pixels do arquivo exportado. Não é uma camada que um player ou um editor possa desligar depois. O arquivo original não muda.</p>
+<h2 id="pt-preview">Prévia</h2>
+<ul>
+  <li>Arraste a tira de quadros para percorrer o vídeo.</li>
+  <li>O botão de ampliar esconde os painéis laterais. Esc os traz de volta.</li>
+  <li>O tempo aparece em horas, minutos, segundos e quadros.</li>
+</ul>
+<h2 id="pt-export">Exportar</h2>
+<p>O botão diz <strong>Processar tudo</strong> ou <strong>Processar este vídeo</strong>, conforme a tarefa.</p>
+<ul>
+  <li><strong>Um vídeo:</strong> escolha onde salvar. O nome sugerido termina em <code>_redacted.mp4</code>.</li>
+  <li><strong>Vários vídeos:</strong> Pro e Annual processam a lista em espera. Cada arquivo é salvo ao lado do original como <code>*_redacted.mp4</code>. Se esse nome já existe, um número é acrescentado. Há uma confirmação antes do lote.</li>
+  <li>Linhas concluídas são puladas. Remova um vídeo concluído e adicione de novo se precisar de outra exportação.</li>
+  <li>A janela fica bloqueada até o fim. Você pode cancelar.</li>
+  <li>Um vídeo mais longo do que o plano permite é marcado como <strong>Longo demais</strong> e não é exportado.</li>
+</ul>
+<p>Exportações gratuitas levam a marca d'água “Created with videoredaction.io”. As pagas não. O resultado é um MP4 H.264.</p>
+<h2 id="pt-account">Conta e planos</h2>
+<p>O botão mostra o nome do plano em inglês: Free, Basic, Pro ou Annual.</p>
+<table>
+  <thead><tr><th>Plano</th><th>O que inclui</th></tr></thead>
+  <tbody>
+    <tr><td>Free</td><td>Sem conta. Um vídeo por vez, até 10 minutos, com marca d'água.</td></tr>
+    <tr><td>Basic</td><td>1 dispositivo. Um vídeo por vez, até 10 minutos, sem marca d'água.</td></tr>
+    <tr><td>Pro</td><td>Até 2 dispositivos. Processamento em lote, duração ilimitada, sem marca d'água.</td></tr>
+    <tr><td>Annual</td><td>Os mesmos recursos do Pro, cobrados por ano.</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>Conta &gt; Conta</strong> mostra o plano, o e-mail e o ID de hardware. Copie o ID se o suporte pedir.</li>
+  <li><strong>Entrar</strong> abre o navegador e devolve a licença a este PC. <strong>Upgrade</strong> abre a página de preços.</li>
+  <li><strong>Sair da conta</strong> volta este PC para Free. O dispositivo continua na conta até você removê-lo no site.</li>
+  <li>Se a entrada disser que o limite de dispositivos está cheio, remova um computador no site e entre de novo.</li>
+</ul>
+<p>Depois de instalar e ativar, o processamento funciona sem internet. Entrar e fazer upgrade precisam de rede.</p>
+<h2 id="pt-settings">GPU e idioma</h2>
+<p><strong>Editar &gt; Configurações</strong> pergunta se a GPU (DirectML) deve ser usada. Se a GPU não iniciar, o mecanismo usa a CPU e fica bem mais lento. O texto à direita da barra de processamento mostra qual está em uso.</p>
+<p>O botão de idioma no canto superior direito fica gravado neste PC. Este guia abre no mesmo idioma.</p>
+<p>Windows 10 ou 11, 64 bits. CPU com AVX2. 4 GB de RAM, 8 GB recomendados. Cerca de 1 GB de espaço livre.</p>
+<h2 id="pt-keys">Atalhos</h2>
+<table>
+  <thead><tr><th>Tecla</th><th>Ação</th></tr></thead>
+  <tbody>
+    <tr><td><span class="key">Left</span> / <span class="key">Right</span></td><td>Avançar ou voltar um quadro</td></tr>
+    <tr><td><span class="key">Shift</span> + setas</td><td>Cerca de um segundo</td></tr>
+    <tr><td><span class="key">Home</span> / <span class="key">End</span></td><td>Ir ao início ou ao fim</td></tr>
+    <tr><td><span class="key">Ctrl</span> + roda na linha do tempo</td><td>Ampliar a linha do tempo. A roda sozinha a desloca.</td></tr>
+    <tr><td><span class="key">Esc</span></td><td>Sair da prévia ampliada</td></tr>
+    <tr><td><span class="key">F8</span></td><td>Salvar uma pasta de depuração. Veja abaixo.</td></tr>
+  </tbody>
+</table>
+<h2 id="pt-trouble">Se algo der errado</h2>
+<ul>
+  <li><strong>O vídeo não abre.</strong> Tente outro arquivo ou converta para MP4.</li>
+  <li><strong>A lista de detecções está vazia.</strong> Reproduza ou percorra o vídeo. A exportação ainda analisa o arquivo.</li>
+  <li><strong>Um rosto ou uma placa passou.</strong> Desenhe <strong>Caixa e seguir</strong> ou <strong>Caixa fixa</strong>.</li>
+  <li><strong>A pessoa errada ficou visível.</strong> Em Manter pessoas, clique no rosto certo. Escolha <strong>Não é ela</strong> se a correspondência estiver errada.</li>
+  <li><strong>Longo demais.</strong> Encurte o vídeo ou use Pro ou Annual.</li>
+  <li><strong>O lote está bloqueado.</strong> Free e Basic processam um vídeo por vez.</li>
+  <li><strong>A entrada falhou.</strong> Verifique a rede. Se o limite de dispositivos estiver cheio, remova um PC no site.</li>
+  <li><strong>O processamento está lento.</strong> Em Configurações, escolha a GPU quando ela estiver disponível.</li>
+  <li><strong>Um quadro parece errado.</strong> Pause nele e use <strong>Ajuda &gt; Salvar depuração (F8)</strong>. A pasta contém <code>frame.png</code>, <code>overlay.png</code> e <code>report.txt</code>.</li>
+</ul>
+<h2 id="pt-limits">Antes de confiar no resultado</h2>
+<p>Assista você mesmo ao arquivo exportado. A detecção pode deixar passar um rosto ou uma placa se for pequeno, de lado, desfocado ou encoberto. O arquivo novo substitui esses pixels. Ele não altera o original e não decide se o resultado atende a uma lei, a uma ordem judicial ou a uma regra da empresa.</p>
+<footer>Video Blackout · videoredaction.io</footer>
+</div>
+</div>
+</article>
+
+<article id="ja" lang="ja" data-title="Video Blackout 使い方" data-sub="使い方">
+<div class="wrap">
+<nav class="toc">
+  <a href="#ja-start">はじめに</a>
+  <a href="#ja-window">画面</a>
+  <a href="#ja-files">動画を追加する</a>
+  <a href="#ja-jobs">作業を選ぶ</a>
+  <a href="#ja-review">検出を確認する</a>
+  <a href="#ja-boxes">枠を描く</a>
+  <a href="#ja-style">マスクスタイル</a>
+  <a href="#ja-preview">プレビュー</a>
+  <a href="#ja-export">書き出す</a>
+  <a href="#ja-account">アカウントとプラン</a>
+  <a href="#ja-settings">GPU と言語</a>
+  <a href="#ja-keys">ショートカット</a>
+  <a href="#ja-trouble">うまくいかないとき</a>
+  <a href="#ja-limits">書き出しを使う前に</a>
+</nav>
+<div>
+<h1>使い方</h1>
+<p class="lead">顔とナンバープレートを、このパソコン上で隠します。動画はアップロードされません。書き出しは新しい MP4 を作り、元のファイルはそのまま残します。</p>
+<h2 id="ja-start">はじめに</h2>
+<h3>すべて隠す</h3>
+<ol>
+  <li><strong>すべて隠す</strong>を選びます。</li>
+  <li>動画を追加し、<strong>顔とナンバー</strong>、<strong>顔のみ</strong>、<strong>ナンバーのみ</strong>のいずれかを選びます。</li>
+  <li>再生します。鮮明に残す人のチェックを外します。検出が見逃したところは枠を描きます。</li>
+  <li><strong>すべて処理</strong>をクリックします。</li>
+</ol>
+<h3>人物を残す</h3>
+<ol>
+  <li><strong>人物を残す</strong>を選び、動画を 1 本開きます。</li>
+  <li>鮮明に残す顔をそれぞれクリックします。緑の枠が付きます。</li>
+  <li><strong>この動画を処理</strong>をクリックします。</li>
+</ol>
+<h2 id="ja-window">画面</h2>
+<ul>
+  <li><strong>左:</strong> ファイルリストと作業。</li>
+  <li><strong>中央:</strong> プレビュー、枠ツール、タイムライン。</li>
+  <li><strong>右:</strong> 検出した顔とナンバー、および自分で描いた枠。</li>
+  <li><strong>上:</strong> 処理、現在のプラン、言語ボタン。</li>
+</ul>
+<p>再生はプレビューだけです。隠し処理も保存も行いません。</p>
+<h2 id="ja-files">動画を追加する</h2>
+<ul>
+  <li><strong>ファイル &gt; 開く</strong>、または空のプレビューをクリックすると、動画が 1 本開きます。</li>
+  <li><strong>ファイル &gt; ファイルリストに追加</strong>、または<strong>追加</strong>で、複数の動画を入れられます。</li>
+  <li>動画を 1 本ウィンドウへドロップすると、リストに追加して開きます。複数のファイルやフォルダーはファイルリストへドロップします。フォルダーはその階層の動画だけを追加し、サブフォルダーは入りません。</li>
+  <li>行をダブルクリックすると開きます。</li>
+</ul>
+<p>対応形式は MP4、AVI、MOV、MKV、WMV、M4V、WebM、MPG、MPEG です。ダイアログには一般的な形式が出ます。それ以外は <strong>All files</strong> を選びます。</p>
+<p><strong>削除</strong>、<strong>完了を消去</strong>、<strong>すべて消去</strong>はリストだけを変えます。ディスク上のファイルは消しません。</p>
+<h2 id="ja-jobs">作業を選ぶ</h2>
+<h3>すべて隠す</h3>
+<p>検出した顔とナンバーをすべて隠し、待機中のリストを処理します。右側でチェックした項目は隠れます。チェックを外すと、その人物やナンバーはこの動画では鮮明のままです。</p>
+<h3>人物を残す</h3>
+<p>指定した人だけを鮮明に残し、それ以外を隠すときに使います。プレビュー上の顔をクリックします。動画を送ると、同じ人が後から認識される様子を確認できます。確認が出たら、<strong>同一人物</strong>か<strong>別人</strong>を選びます。</p>
+<p><strong>ナンバーも隠す</strong>は初期状態でオンです。ナンバーを見せる場合はオフにします。この選択は現在のファイルだけに効きます。<strong>すべて隠す</strong>に戻すと、この動画で残した人物は破棄されます。</p>
+<p class="note">再生前に検出リストが空でも正常です。書き出し時にはファイル全体を走査します。</p>
+<h2 id="ja-review">検出を確認する</h2>
+<p>再生するか、タイムラインをドラッグします。進んだ位置の検出結果が右側に出ます。</p>
+<ul>
+  <li><span class="swatch g"></span>緑の枠は鮮明のままです。<strong>人物を残す</strong>で使います。</li>
+  <li><strong>すべて隠す</strong>では、チェックした行が隠れ、外した行はこの動画で鮮明のままです。</li>
+</ul>
+<h2 id="ja-boxes">枠を描く</h2>
+<p>顔やナンバーの見逃し、または名札や画面など別の領域を隠すときだけ、自分で枠を描きます。</p>
+<ul>
+  <li><span class="swatch b"></span><strong>枠で追従</strong>は、対象が動くと枠も追います。書き出し時に隠れます。</li>
+  <li><span class="swatch p"></span><strong>枠で固定</strong>は、動画が終わるまで同じ場所に残ります。書き出し時に隠れます。</li>
+</ul>
+<p>見やすいフレームで一時停止し、ツールを選んでからプレビュー上で矩形をドラッグします。どちらの作業でも両方のツールを使えます。</p>
+<h2 id="ja-style">マスクスタイル</h2>
+<p><strong>編集 &gt; マスクスタイル</strong>:</p>
+<ul>
+  <li><strong>モザイク</strong></li>
+  <li><strong>ぼかし</strong></li>
+  <li><strong>単色</strong></li>
+</ul>
+<p>3 つとも、書き出したファイルのピクセルそのものを書き換えます。プレーヤーや編集ソフトで後から外せるレイヤーではありません。元のファイルは変わりません。</p>
+<h2 id="ja-preview">プレビュー</h2>
+<ul>
+  <li>下のフィルムストリップをドラッグして位置を移動します。</li>
+  <li>プレビューを最大化すると左右のパネルが隠れます。Esc で戻します。</li>
+  <li>時刻は時、分、秒、フレームで表示されます。</li>
+</ul>
+<h2 id="ja-export">書き出す</h2>
+<p>ボタンの文字は作業によって <strong>すべて処理</strong> または <strong>この動画を処理</strong> になります。</p>
+<ul>
+  <li><strong>1 本:</strong> 保存場所を選びます。提案される名前は <code>_redacted.mp4</code> で終わります。</li>
+  <li><strong>複数:</strong> Pro と Annual は待機中のリストを処理します。各ファイルは元のファイルの横に <code>*_redacted.mp4</code> として保存されます。同じ名前があるときは番号が付きます。開始前に確認があります。</li>
+  <li>完了した行は飛ばされます。もう一度書き出すときは、いったん削除して追加し直します。</li>
+  <li>処理が終わるまでメインウィンドウはロックされます。キャンセルできます。</li>
+  <li>プランの長さを超える動画は<strong>長すぎる</strong>となり、書き出されません。</li>
+</ul>
+<p>無料の書き出しには透かし “Created with videoredaction.io” が入ります。有料プランには入りません。形式は H.264 の MP4 です。</p>
+<h2 id="ja-account">アカウントとプラン</h2>
+<p>ボタンに出るプラン名は英語です。Free、Basic、Pro、Annual のいずれかです。</p>
+<table>
+  <thead><tr><th>プラン</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>Free</td><td>アカウント不要。一度に 1 本、最長 10 分、透かしあり。</td></tr>
+    <tr><td>Basic</td><td>1 台。一度に 1 本、最長 10 分、透かしなし。</td></tr>
+    <tr><td>Pro</td><td>最大 2 台。一括処理、長さ無制限、透かしなし。</td></tr>
+    <tr><td>Annual</td><td>Pro と同じ機能。年額です。</td></tr>
+  </tbody>
+</table>
+<ul>
+  <li><strong>アカウント &gt; アカウント</strong>に、プラン、メール、ハードウェア ID が出ます。サポートに聞かれたら ID をコピーします。</li>
+  <li><strong>サインイン</strong>はブラウザーを開き、ライセンスをこのパソコンへ戻します。<strong>アップグレード</strong>は料金ページを開きます。</li>
+  <li><strong>サインアウト</strong>すると、このパソコンは Free に戻ります。端末は、Web サイトで外すまでアカウントに残ります。</li>
+  <li>端末数の上限と出たら、Web サイトでパソコンを 1 台外してから、もう一度サインインします。</li>
+</ul>
+<p>インストールと有効化のあと、処理自体はインターネットなしで動きます。サインインとアップグレードにはネットワークが必要です。</p>
+<h2 id="ja-settings">GPU と言語</h2>
+<p><strong>編集 &gt; 設定</strong>で、GPU（DirectML）を使うか選びます。GPU が起動できないときは CPU に戻り、かなり遅くなります。処理バーの右側に、いま使っている方が表示されます。</p>
+<p>右上の言語ボタンは、このパソコンに記憶されます。この説明も同じ言語で開きます。</p>
+<p>Windows 10 または 11 の 64 ビット。AVX2 対応の CPU。メモリは 4 GB、推奨 8 GB。空きディスクは約 1 GB。</p>
+<h2 id="ja-keys">ショートカット</h2>
+<table>
+  <thead><tr><th>キー</th><th>動作</th></tr></thead>
+  <tbody>
+    <tr><td><span class="key">Left</span> / <span class="key">Right</span></td><td>1 フレーム進む、戻る</td></tr>
+    <tr><td><span class="key">Shift</span> + 矢印</td><td>約 1 秒進む、戻る</td></tr>
+    <tr><td><span class="key">Home</span> / <span class="key">End</span></td><td>先頭または末尾へ</td></tr>
+    <tr><td>タイムラインで <span class="key">Ctrl</span> + ホイール</td><td>タイムラインを拡大縮小。ホイールだけだと左右に移動します。</td></tr>
+    <tr><td><span class="key">Esc</span></td><td>最大化したプレビューを戻す</td></tr>
+    <tr><td><span class="key">F8</span></td><td>検出デバッグのフォルダーを保存。下記を参照。</td></tr>
+  </tbody>
+</table>
+<h2 id="ja-trouble">うまくいかないとき</h2>
+<ul>
+  <li><strong>動画が開かない。</strong>別のファイルを試すか、MP4 に変換します。</li>
+  <li><strong>検出リストが空。</strong>再生するか送ります。書き出し時にはファイルを走査します。</li>
+  <li><strong>顔やナンバーが漏れた。</strong><strong>枠で追従</strong>か<strong>枠で固定</strong>を使います。</li>
+  <li><strong>残す人が違う。</strong>人物を残すで、正しい顔をクリックします。別人なら<strong>別人</strong>を選びます。</li>
+  <li><strong>長すぎる。</strong>動画を短くするか、Pro または Annual を使います。</li>
+  <li><strong>一括処理できない。</strong>Free と Basic は一度に 1 本だけです。</li>
+  <li><strong>サインインできない。</strong>ネットワークを確認します。端末数が上限なら、Web サイトでパソコンを外します。</li>
+  <li><strong>処理が遅い。</strong>設定で、使えるときは GPU を選びます。</li>
+  <li><strong>あるフレームがおかしい。</strong>そこで一時停止し、<strong>ヘルプ &gt; 検出デバッグを保存 (F8)</strong>を使います。フォルダーには <code>frame.png</code>、<code>overlay.png</code>、<code>report.txt</code> があります。</li>
+</ul>
+<h2 id="ja-limits">書き出しを使う前に</h2>
+<p>書き出したファイルは自分で確認してください。顔やナンバーが小さい、横を向いている、ぼけている、隠れているときは、検出が漏れることがあります。新しいファイルはそれらのピクセルを書き換えます。元のファイルは変えず、法律、裁判所の指示、社内規則を満たすかどうかも判断しません。</p>
+<footer>Video Blackout · videoredaction.io</footer>
+</div>
+</div>
+</article>
+
+</main>
+<script>
+(function () {
+  var locales = [
+    ["en", "English"],
+    ["de", "Deutsch"],
+    ["fr", "Français"],
+    ["es", "Español"],
+    ["pt-BR", "Português"],
+    ["ja", "日本語"],
+    ["zh-CN", "简体中文"],
+    ["zh-TW", "繁體中文"]
+  ];
+  function norm(raw) {
+    var s = String(raw || "").replace(/^#/, "").trim().replace(/_/g, "-").toLowerCase();
+    if (!s) return "";
+    if (s.indexOf("zh-tw") === 0 || s.indexOf("zh-hk") === 0 || s.indexOf("zh-mo") === 0 || s.indexOf("hant") >= 0) return "zh-TW";
+    if (s.indexOf("zh") === 0) return "zh-CN";
+    if (s.indexOf("pt") === 0) return "pt-BR";
+    if (s.indexOf("ja") === 0) return "ja";
+    if (s.indexOf("de") === 0) return "de";
+    if (s.indexOf("fr") === 0) return "fr";
+    if (s.indexOf("es") === 0) return "es";
+    if (s.indexOf("en") === 0) return "en";
+    return "";
+  }
+  function apply(code, writeHash) {
+    var article = document.getElementById(code) || document.getElementById("en");
+    code = article.id;
+    document.documentElement.lang = code;
+    document.documentElement.dataset.lang = code;
+    document.title = article.dataset.title || "Video Blackout";
+    var sub = document.getElementById("brand-sub");
+    if (sub) sub.textContent = article.dataset.sub || "";
+    document.querySelectorAll("#langs button").forEach(function (btn) {
+      var on = btn.dataset.code === code;
+      btn.classList.toggle("on", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    if (writeHash && location.hash !== "#" + code)
+      history.replaceState(null, "", "#" + code);
+  }
+  var bar = document.getElementById("langs");
+  locales.forEach(function (item) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.dataset.code = item[0];
+    btn.textContent = item[1];
+    btn.addEventListener("click", function () {
+      apply(item[0], true);
+      window.scrollTo(0, 0);
+    });
+    bar.appendChild(btn);
+  });
+  apply(document.documentElement.dataset.lang || "en", false);
+  document.querySelectorAll("nav.toc a").forEach(function (a) {
+    a.addEventListener("click", function (ev) {
+      var id = (a.getAttribute("href") || "").replace(/^#/, "");
+      var target = document.getElementById(id);
+      if (!target) return;
+      ev.preventDefault();
+      target.scrollIntoView();
+      var lang = document.documentElement.dataset.lang || "en";
+      if (location.hash !== "#" + lang)
+        history.replaceState(null, "", "#" + lang);
+    });
+  });
+  window.addEventListener("hashchange", function () {
+    var code = norm(location.hash);
+    if (code) apply(code, false);
+  });
+})();
+</script>
+</body>
+</html>
