@@ -18,7 +18,6 @@ models/face-reidentification-retail-0095.onnx
 # Local installers, store submission, and launchers. Not part of the public tree.
 setup/
 msix/
-version.ini
 安装包.bat
 打包.bat
 提交商店文案.bat

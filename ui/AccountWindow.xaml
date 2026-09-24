@@ -39,13 +39,16 @@
                    Background="#0F141B" Foreground="#C5CBD3" BorderBrush="#2C3645"
                    Padding="8,6"/>
         </DockPanel>
-        <WrapPanel Margin="0,16,0,0" Orientation="Horizontal">
+        <UniformGrid Columns="2" Margin="0,16,0,0">
           <Button x:Name="SignInBtn" Style="{StaticResource PrimaryButton}" Content="{local:Tr accountSignIn}"
-                  MinWidth="110" Padding="12,8" Margin="0,0,8,8" Click="OnSignIn"/>
-          <Button Content="{local:Tr accountUpgrade}" MinWidth="96" Padding="12,8" Margin="0,0,8,8" Click="OnUpgrade"/>
-          <Button Content="{local:Tr accountManage}" MinWidth="120" Padding="12,8" Margin="0,0,8,8" Click="OnManage"/>
-          <Button x:Name="SignOutBtn" Content="{local:Tr accountSignOut}" MinWidth="96" Padding="12,8" Margin="0,0,8,8" Click="OnSignOut"/>
-        </WrapPanel>
+                  HorizontalAlignment="Stretch" Padding="12,8" Margin="0,0,4,4" Click="OnSignIn"/>
+          <Button Content="{local:Tr accountUpgrade}"
+                  HorizontalAlignment="Stretch" Padding="12,8" Margin="4,0,0,4" Click="OnUpgrade"/>
+          <Button Content="{local:Tr accountManage}"
+                  HorizontalAlignment="Stretch" Padding="12,8" Margin="0,4,4,0" Click="OnManage"/>
+          <Button x:Name="SignOutBtn" Content="{local:Tr accountSignOut}"
+                  HorizontalAlignment="Stretch" Padding="12,8" Margin="4,4,0,0" Click="OnSignOut"/>
+        </UniformGrid>
       </StackPanel>
     </DockPanel>
   </Border>

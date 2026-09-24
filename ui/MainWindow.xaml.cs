@@ -1154,9 +1154,32 @@ public partial class MainWindow : Window
         RuntimeStatus.Text = _engine.RuntimeStatus();
     }
 
+    private static string AppVersionText()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "version.ini");
+        if (!File.Exists(path))
+            return "";
+        foreach (var line in File.ReadLines(path))
+        {
+            var text = line.Trim();
+            if (!text.StartsWith("version", StringComparison.OrdinalIgnoreCase))
+                continue;
+            var split = text.IndexOf('=');
+            if (split < 0)
+                continue;
+            return text[(split + 1)..].Trim();
+        }
+        return "";
+    }
+
     private void OnAbout(object sender, RoutedEventArgs e)
     {
-        AppDialog.Show(this, L.T("msgAbout"), L.T("msgAboutBody"), NativeEngine.HardwareId(), L.T("msgMachineId"));
+        var version = AppVersionText();
+        var body = string.IsNullOrEmpty(version)
+            ? L.T("msgAboutBody")
+            : $"{L.T("msgVersion")} {version}\n\n{L.T("msgAboutBody")}";
+        AppDialog.Show(this, L.T("msgAbout"), body, NativeEngine.HardwareId(), L.T("msgMachineId"),
+            L.T("msgSourceCode"), "https://github.com/topworld87/VideoRedactionAPP");
     }
 
     private void OnLicenses(object sender, RoutedEventArgs e)

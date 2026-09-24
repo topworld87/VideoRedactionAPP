@@ -1,5 +1,15 @@
 cmake_minimum_required(VERSION 3.21)
-project(VideoBlackoutCore VERSION 1.0.0 LANGUAGES CXX)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/bin/version.ini" _vb_version_ini)
+string(REGEX MATCH "version[ \t]*=[ \t]*([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ "${_vb_version_ini}")
+if(NOT CMAKE_MATCH_1)
+  message(FATAL_ERROR "version.ini must contain version=Major.Minor.Build.Revision")
+endif()
+set(VB_VER_MAJOR "${CMAKE_MATCH_1}")
+set(VB_VER_MINOR "${CMAKE_MATCH_2}")
+set(VB_VER_PATCH "${CMAKE_MATCH_3}")
+set(VB_VER_TWEAK "${CMAKE_MATCH_4}")
+set(VB_VERSION "${VB_VER_MAJOR}.${VB_VER_MINOR}.${VB_VER_PATCH}.${VB_VER_TWEAK}")
+project(VideoBlackoutCore VERSION ${VB_VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -77,6 +87,9 @@ target_link_libraries(VideoBlackoutCore PRIVATE
 
 if(WIN32)
   target_link_libraries(VideoBlackoutCore PRIVATE bcrypt advapi32 dxgi pdh)
+  set(VB_VERSION_RC "${CMAKE_CURRENT_BINARY_DIR}/version.rc")
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/native/version.rc.in" "${VB_VERSION_RC}" @ONLY)
+  target_sources(VideoBlackoutCore PRIVATE "${VB_VERSION_RC}")
 endif()
 
 add_custom_command(TARGET VideoBlackoutCore POST_BUILD
@@ -92,10 +105,7 @@ add_custom_command(TARGET VideoBlackoutCore POST_BUILD
 
 set(_vb_onnx
   "${CMAKE_SOURCE_DIR}/models/yolo11n-face.onnx"
-  "${CMAKE_SOURCE_DIR}/models/face_detection_yunet_2023mar.onnx"
-  "${CMAKE_SOURCE_DIR}/models/face-detection-adas-0001.onnx"
-  "${CMAKE_SOURCE_DIR}/models/landmarks-regression-retail-0009.onnx"
-  "${CMAKE_SOURCE_DIR}/models/face-reidentification-retail-0095.onnx"
+  "${CMAKE_SOURCE_DIR}/models/yolov8n.onnx"
 )
 foreach(_m ${_vb_onnx})
   if(EXISTS "${_m}")
@@ -105,11 +115,6 @@ foreach(_m ${_vb_onnx})
     )
   endif()
 endforeach()
-if(EXISTS "${APP_ROOT}/models")
-  add_custom_command(TARGET VideoBlackoutCore POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${APP_ROOT}/models" "${OUTPUT_BIN}/models"
-  )
-endif()
 
 set(_ffmpeg "${APP_ROOT}/tools/ffmpeg/ffmpeg.exe")
 if(NOT EXISTS "${_ffmpeg}")

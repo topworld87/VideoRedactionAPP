@@ -12,7 +12,21 @@
     <RootNamespace>VideoBlackout.Wpf</RootNamespace>
     <AssemblyName>VideoBlackout.Wpf</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AppVersion>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\..\bin\version.ini')), '(?m)^version\s*=\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s*$').Groups[1].Value)</AppVersion>
+    <Version>$(AppVersion)</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+    <InformationalVersion>$(Version)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Product>Video Blackout</Product>
+    <Company>FlyAllRisk</Company>
+    <AssemblyTitle>Video Blackout</AssemblyTitle>
+    <Description>Offline video redaction for Windows</Description>
+    <Copyright>Copyright © FlyAllRisk</Copyright>
   </PropertyGroup>
+  <Target Name="ValidateAppVersion" BeforeTargets="BeforeBuild;GenerateAssemblyInfo">
+    <Error Condition="'$(AppVersion)' == ''" Text="version.ini must contain version=Major.Minor.Build.Revision" />
+  </Target>
   <ItemGroup>
     <Content Include="..\help\guide.html" Link="help\guide.html" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\legal\AGPL-3.0.txt" Link="legal\AGPL-3.0.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

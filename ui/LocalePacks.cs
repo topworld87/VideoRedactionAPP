@@ -65,7 +65,7 @@ public static class LocalePacks
         ["emptyDetect"] = "播放视频即可看到检测结果。列表为空也没关系，导出时仍会扫描文件。",
         ["msgSettings"] = "设置",
         ["msgSettingsBody"] = "在可用时使用 GPU（DirectML）？\n\n如果 GPU 初始化失败，引擎会退回 CPU，速度会慢很多。",
-        ["dlgUseGpu"] = "使用 GPU", ["dlgUseCpu"] = "使用 CPU", ["msgAbout"] = "关于", ["msgLicenses"] = "开源许可", ["dlgViewLicense"] = "查看 AGPL-3.0", ["msgLicenseMissing"] = "在程序旁边没有找到许可声明。", ["msgAboutBody"] = "Video Blackout 是 GNU AGPL v3 自由软件。没有任何担保。在遵守该许可证的前提下可以再分发。人脸模型 yolo11n-face.onnx 为 AGPL-3.0，因此整个程序也是。详情见“帮助 → 开源许可”。", ["msgMachineId"] = "机器 ID",
+        ["dlgUseGpu"] = "使用 GPU", ["dlgUseCpu"] = "使用 CPU", ["msgAbout"] = "关于", ["msgVersion"] = "版本", ["msgLicenses"] = "开源许可", ["dlgViewLicense"] = "查看 AGPL-3.0", ["msgLicenseMissing"] = "在程序旁边没有找到许可声明。", ["msgAboutBody"] = "Video Blackout 是 GNU AGPL v3 自由软件。没有任何担保。在遵守该许可证的前提下可以再分发。人脸模型 yolo11n-face.onnx 为 AGPL-3.0，因此整个程序也是。详情见“帮助 → 开源许可”。", ["msgSourceCode"] = "源代码", ["msgMachineId"] = "机器 ID",
         ["jobHintKeep"] = "点击要保持清晰的人脸。导出时其余的人会被遮住。仅作用于当前文件。",
         ["jobHintRedact"] = "遮住检测到的每张人脸和车牌，然后处理列表。",
         ["keepClear"] = "保持清晰", ["maskTitle"] = "遮罩", ["detected"] = "已检测",
@@ -139,7 +139,7 @@ public static class LocalePacks
         ["emptyDetect"] = "播放影片即可看到檢測結果。列表為空也沒關係，匯出時仍會掃描檔案。",
         ["msgSettings"] = "設定",
         ["msgSettingsBody"] = "在可用時使用 GPU（DirectML）？\n\n如果 GPU 初始化失敗，引擎會退回 CPU，速度會慢很多。",
-        ["dlgUseGpu"] = "使用 GPU", ["dlgUseCpu"] = "使用 CPU", ["msgAbout"] = "關於", ["msgLicenses"] = "開源授權", ["dlgViewLicense"] = "查看 AGPL-3.0", ["msgLicenseMissing"] = "在程式旁邊沒有找到授權聲明。", ["msgAboutBody"] = "Video Blackout 是 GNU AGPL v3 自由軟體。沒有任何擔保。在遵守該授權的前提下可以再散布。人臉模型 yolo11n-face.onnx 為 AGPL-3.0，因此整個程式也是。詳情見「幫助 → 開源授權」。", ["msgMachineId"] = "機器 ID",
+        ["dlgUseGpu"] = "使用 GPU", ["dlgUseCpu"] = "使用 CPU", ["msgAbout"] = "關於", ["msgVersion"] = "版本", ["msgLicenses"] = "開源授權", ["dlgViewLicense"] = "查看 AGPL-3.0", ["msgLicenseMissing"] = "在程式旁邊沒有找到授權聲明。", ["msgAboutBody"] = "Video Blackout 是 GNU AGPL v3 自由軟體。沒有任何擔保。在遵守該授權的前提下可以再散布。人臉模型 yolo11n-face.onnx 為 AGPL-3.0，因此整個程式也是。詳情見「幫助 → 開源授權」。", ["msgSourceCode"] = "原始碼", ["msgMachineId"] = "機器 ID",
         ["jobHintKeep"] = "點選要保持清晰的人臉。匯出時其餘的人會被遮住。僅作用於當前檔案。",
         ["jobHintRedact"] = "遮住檢測到的每張人臉和車牌，然後處理列表。",
         ["keepClear"] = "保持清晰", ["maskTitle"] = "遮罩", ["detected"] = "已檢測",
@@ -206,7 +206,7 @@ public static class LocalePacks
         ["hintWatermark"] = "Der kostenlose Export enthält ein Wasserzeichen.", ["planFreeTip"] = "Kostenlos — anmelden für Basic, Pro oder Jahresabo",
         ["statusWaiting"] = "Wartend", ["statusDone"] = "Fertig", ["statusFailed"] = "Fehlgeschlagen", ["statusCancelled"] = "Abgebrochen",
         ["statusTooLong"] = "Zu lang", ["statusProcessing"] = "Wird verarbeitet", ["dlgOk"] = "OK", ["dlgCancel"] = "Abbrechen",
-        ["msgLicenses"] = "Open-Source-Lizenzen", ["dlgViewLicense"] = "AGPL-3.0 anzeigen", ["msgLicenseMissing"] = "Der Lizenzhinweis wurde neben dem Programm nicht gefunden.", ["dlgClose"] = "Schließen", ["dlgUpgrade"] = "Upgrade", ["dlgSignOut"] = "Abmelden", ["accountTitle"] = "Konto",
+        ["msgLicenses"] = "Open-Source-Lizenzen", ["dlgViewLicense"] = "AGPL-3.0 anzeigen", ["msgLicenseMissing"] = "Der Lizenzhinweis wurde neben dem Programm nicht gefunden.", ["msgVersion"] = "Version", ["msgSourceCode"] = "Quellcode", ["dlgClose"] = "Schließen", ["dlgUpgrade"] = "Upgrade", ["dlgSignOut"] = "Abmelden", ["accountTitle"] = "Konto",
     };
 
     private static readonly Dictionary<string, string> Fr = new()
@@ -239,7 +239,7 @@ public static class LocalePacks
         ["hintWatermark"] = "L’export gratuit ajoute un filigrane.", ["planFreeTip"] = "Gratuit — connectez-vous pour Basic, Pro ou Annuel",
         ["statusWaiting"] = "En attente", ["statusDone"] = "Terminé", ["statusFailed"] = "Échec", ["statusCancelled"] = "Annulé",
         ["statusTooLong"] = "Trop long", ["statusProcessing"] = "Traitement", ["dlgOk"] = "OK", ["dlgCancel"] = "Annuler",
-        ["msgLicenses"] = "Licences open source", ["dlgViewLicense"] = "Voir l'AGPL-3.0", ["msgLicenseMissing"] = "L'avis de licence est introuvable à côté du programme.", ["dlgClose"] = "Fermer", ["dlgUpgrade"] = "Mettre à niveau", ["dlgSignOut"] = "Déconnexion", ["accountTitle"] = "Compte",
+        ["msgLicenses"] = "Licences open source", ["dlgViewLicense"] = "Voir l'AGPL-3.0", ["msgLicenseMissing"] = "L'avis de licence est introuvable à côté du programme.", ["msgVersion"] = "Version", ["msgSourceCode"] = "Code source", ["dlgClose"] = "Fermer", ["dlgUpgrade"] = "Mettre à niveau", ["dlgSignOut"] = "Déconnexion", ["accountTitle"] = "Compte",
     };
 
     private static readonly Dictionary<string, string> Es = new()
@@ -272,7 +272,7 @@ public static class LocalePacks
         ["hintWatermark"] = "La exportación gratuita añade una marca de agua.", ["planFreeTip"] = "Gratis — inicia sesión para Basic, Pro o Anual",
         ["statusWaiting"] = "En espera", ["statusDone"] = "Hecho", ["statusFailed"] = "Error", ["statusCancelled"] = "Cancelado",
         ["statusTooLong"] = "Demasiado largo", ["statusProcessing"] = "Procesando", ["dlgOk"] = "Aceptar", ["dlgCancel"] = "Cancelar",
-        ["msgLicenses"] = "Licencias de código abierto", ["dlgViewLicense"] = "Ver AGPL-3.0", ["msgLicenseMissing"] = "No se encontró el aviso de licencia junto al programa.", ["dlgClose"] = "Cerrar", ["dlgUpgrade"] = "Mejorar", ["dlgSignOut"] = "Cerrar sesión", ["accountTitle"] = "Cuenta",
+        ["msgLicenses"] = "Licencias de código abierto", ["dlgViewLicense"] = "Ver AGPL-3.0", ["msgLicenseMissing"] = "No se encontró el aviso de licencia junto al programa.", ["msgVersion"] = "Versión", ["msgSourceCode"] = "Código fuente", ["dlgClose"] = "Cerrar", ["dlgUpgrade"] = "Mejorar", ["dlgSignOut"] = "Cerrar sesión", ["accountTitle"] = "Cuenta",
     };
 
     private static readonly Dictionary<string, string> Pt = new()
@@ -305,7 +305,7 @@ public static class LocalePacks
         ["hintWatermark"] = "A exportação gratuita adiciona uma marca d'água.", ["planFreeTip"] = "Grátis — entre para ativar Basic, Pro ou Anual",
         ["statusWaiting"] = "Aguardando", ["statusDone"] = "Concluído", ["statusFailed"] = "Falhou", ["statusCancelled"] = "Cancelado",
         ["statusTooLong"] = "Longo demais", ["statusProcessing"] = "Processando", ["dlgOk"] = "OK", ["dlgCancel"] = "Cancelar",
-        ["msgLicenses"] = "Licenças de código aberto", ["dlgViewLicense"] = "Ver AGPL-3.0", ["msgLicenseMissing"] = "O aviso de licença não foi encontrado ao lado do programa.", ["dlgClose"] = "Fechar", ["dlgUpgrade"] = "Upgrade", ["dlgSignOut"] = "Sair", ["accountTitle"] = "Conta",
+        ["msgLicenses"] = "Licenças de código aberto", ["dlgViewLicense"] = "Ver AGPL-3.0", ["msgLicenseMissing"] = "O aviso de licença não foi encontrado ao lado do programa.", ["msgVersion"] = "Versão", ["msgSourceCode"] = "Código-fonte", ["dlgClose"] = "Fechar", ["dlgUpgrade"] = "Upgrade", ["dlgSignOut"] = "Sair", ["accountTitle"] = "Conta",
     };
 
     private static readonly Dictionary<string, string> Ja = new()
@@ -338,6 +338,6 @@ public static class LocalePacks
         ["hintWatermark"] = "無料の書き出しには透かしが入ります。", ["planFreeTip"] = "無料 — ログインすると Basic、Pro、年間プランを有効にできます",
         ["statusWaiting"] = "待機中", ["statusDone"] = "完了", ["statusFailed"] = "失敗", ["statusCancelled"] = "キャンセル",
         ["statusTooLong"] = "長すぎる", ["statusProcessing"] = "処理中", ["dlgOk"] = "OK", ["dlgCancel"] = "キャンセル",
-        ["msgLicenses"] = "オープンソースライセンス", ["dlgViewLicense"] = "AGPL-3.0 を表示", ["msgLicenseMissing"] = "アプリの横にライセンス表示が見つかりません。", ["dlgClose"] = "閉じる", ["dlgUpgrade"] = "アップグレード", ["dlgSignOut"] = "サインアウト", ["accountTitle"] = "アカウント",
+        ["msgLicenses"] = "オープンソースライセンス", ["dlgViewLicense"] = "AGPL-3.0 を表示", ["msgLicenseMissing"] = "アプリの横にライセンス表示が見つかりません。", ["msgVersion"] = "バージョン", ["msgSourceCode"] = "ソースコード", ["dlgClose"] = "閉じる", ["dlgUpgrade"] = "アップグレード", ["dlgSignOut"] = "サインアウト", ["accountTitle"] = "アカウント",
     };
 }

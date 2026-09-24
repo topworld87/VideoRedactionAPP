@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Navigation;
 
 namespace VideoBlackout.Wpf;
 
@@ -18,9 +20,10 @@ public partial class AppDialog : Window
     }
 
     public static void Show(Window? owner, string title, string message,
-        string? detail = null, string? detailLabel = null)
+        string? detail = null, string? detailLabel = null,
+        string? linkLabel = null, string? linkUrl = null)
     {
-        var dlg = Create(owner, title, message, detail, detailLabel);
+        var dlg = Create(owner, title, message, detail, detailLabel, linkLabel, linkUrl);
         dlg.CancelBtn.Visibility = Visibility.Collapsed;
         dlg.OkBtn.Content = L.T("dlgOk");
         dlg.ShowDialog();
@@ -47,7 +50,8 @@ public partial class AppDialog : Window
     }
 
     private static AppDialog Create(Window? owner, string title, string message,
-        string? detail = null, string? detailLabel = null)
+        string? detail = null, string? detailLabel = null,
+        string? linkLabel = null, string? linkUrl = null)
     {
         var dlg = new AppDialog();
         if (owner is { IsLoaded: true })
@@ -69,7 +73,21 @@ public partial class AppDialog : Window
             else
                 dlg.DetailBox.Margin = new Thickness(0, 12, 0, 2);
         }
+        if (!string.IsNullOrWhiteSpace(linkLabel) &&
+            Uri.TryCreate(linkUrl, UriKind.Absolute, out var link))
+        {
+            dlg.LinkLabel.Text = linkLabel;
+            dlg.LinkRun.Text = link.AbsoluteUri;
+            dlg.SourceLink.NavigateUri = link;
+            dlg.LinkBlock.Visibility = Visibility.Visible;
+        }
         return dlg;
+    }
+
+    private void OnSourceNavigate(object sender, RequestNavigateEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+        e.Handled = true;
     }
 
     private void OnOkClick(object sender, RoutedEventArgs e) => DialogResult = true;

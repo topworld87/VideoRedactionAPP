@@ -33,6 +33,14 @@
       </Border>
       <StackPanel Margin="18,16,18,16">
         <TextBlock x:Name="MessageText" TextWrapping="Wrap" FontSize="13" LineHeight="20"/>
+        <TextBlock x:Name="LinkBlock" Margin="0,14,0,0" Visibility="Collapsed"
+                   TextWrapping="Wrap" FontSize="13" LineHeight="20">
+          <Run x:Name="LinkLabel" Foreground="#8B95A5"/>
+          <LineBreak/>
+          <Hyperlink x:Name="SourceLink" RequestNavigate="OnSourceNavigate" Foreground="#7EB6FF">
+            <Run x:Name="LinkRun"/>
+          </Hyperlink>
+        </TextBlock>
         <TextBlock x:Name="DetailLabel" FontSize="11" Foreground="#8B95A5"
                    Margin="0,14,0,6" Visibility="Collapsed"/>
         <TextBox x:Name="DetailBox" Visibility="Collapsed" IsReadOnly="True"
