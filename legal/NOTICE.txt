@@ -18,7 +18,7 @@ Corresponding source
 
 The corresponding source is the preferred form for modifying this version: the application source, the build scripts, and the model files that ship with the program, including models/yolo11n-face.onnx.
 
-The complete corresponding source for this version is published at no charge at https://github.com/topworld87/VideoRedaction. You may also obtain that source by writing to support@videoredaction.io. This offer lasts at least three years after you receive this version. If you downloaded the program from https://videoredaction.io, the same source is offered from that site at no further charge.
+The complete corresponding source for this version is published at no charge at https://github.com/topworld87/VideoRedactionAPP. You may also obtain that source by writing to support@videoredaction.io. This offer lasts at least three years after you receive this version. If you downloaded the program from https://videoredaction.io, the same source is offered from that site at no further charge.
 
 This notice is installed next to the program as legal/NOTICE.txt.
 
@@ -80,7 +80,7 @@ AGPL-3.0 允许使用、修改和收费。收到本程序的人必须能拿到�
 
 对应源代码是修改这一版本所需的首选形式：应用程序源码、构建脚本，以及随程序提供的模型文件，包括 models/yolo11n-face.onnx。
 
-这一版本的完整对应源代码免费发布在 https://github.com/topworld87/VideoRedaction 。也可写信向 support@videoredaction.io 免费索取。此要约在你收到本版本后至少三年内有效。若本程序是从 https://videoredaction.io 下载的，同一份源代码也在该网站提供，且不另收费。
+这一版本的完整对应源代码免费发布在 https://github.com/topworld87/VideoRedactionAPP 。也可写信向 support@videoredaction.io 免费索取。此要约在你收到本版本后至少三年内有效。若本程序是从 https://videoredaction.io 下载的，同一份源代码也在该网站提供，且不另收费。
 
 本声明随程序安装在 legal/NOTICE.txt。
 
@@ -142,7 +142,7 @@ AGPL-3.0 允許使用、修改和收費。收到本程式的人必須能拿到�
 
 對應原始碼是修改這一版本所需的首選形式：應用程式原始碼、建置指令碼，以及隨程式提供的模型檔，包括 models/yolo11n-face.onnx。
 
-這一版本的完整對應原始碼免費發布在 https://github.com/topworld87/VideoRedaction 。也可寫信向 support@videoredaction.io 免費索取。此要約在你收到本版本後至少三年內有效。若本程式是從 https://videoredaction.io 下載的，同一份原始碼也在該網站提供，且不另收費。
+這一版本的完整對應原始碼免費發布在 https://github.com/topworld87/VideoRedactionAPP 。也可寫信向 support@videoredaction.io 免費索取。此要約在你收到本版本後至少三年內有效。若本程式是從 https://videoredaction.io 下載的，同一份原始碼也在該網站提供，且不另收費。
 
 本聲明隨程式安裝在 legal/NOTICE.txt。
 

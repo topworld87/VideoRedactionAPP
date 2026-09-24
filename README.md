@@ -71,7 +71,7 @@ Video Blackout is free software under the [GNU Affero General Public License v3.
 
 This program includes `models/yolo11n-face.onnx`, a face-detection model based on Ultralytics YOLO11 (AGPL-3.0). Because that model is part of the program, Video Blackout as a whole is AGPL-3.0. Notices are in [legal/NOTICE.txt](legal/NOTICE.txt).
 
-This repository is the corresponding source for this version: the application source and the model files that ship with the program, including `yolo11n-face.onnx`. The same source is offered at no charge from [videoredaction.io](https://videoredaction.io/en) and by writing to support@videoredaction.io for at least three years after you receive a given version.
+This repository is the corresponding source for this version: the application source and the model files that ship with the program, including `yolo11n-face.onnx`. It is published at [github.com/topworld87/VideoRedactionAPP](https://github.com/topworld87/VideoRedactionAPP). The same source is offered at no charge from [videoredaction.io](https://videoredaction.io/en) and by writing to support@videoredaction.io for at least three years after you receive a given version.
 
 To build the Windows app from this tree, install Visual Studio 2022 with C++ and CMake, plus the .NET 8 SDK. The native project links OpenCV 4.10 and ONNX Runtime from a sibling `app` directory (`../app/opencv` and `../app/third_party/onnxruntime`). From this folder:
 
@@ -89,4 +89,4 @@ The executable is `bin\VideoBlackout.Wpf.exe`. For a normal install, use the [we
 
 请到网站下载安装：[videoredaction.io/zh-CN/download](https://videoredaction.io/zh-CN/download)。价格与账号也在网站上。支持邮箱 [support@videoredaction.io](mailto:support@videoredaction.io)。
 
-本仓库是 AGPL-3.0 对应源代码。程序包含基于 Ultralytics YOLO11 的 `models/yolo11n-face.onnx`，因此整体以 AGPL-3.0 发布。可以在该许可证下使用、修改和再分发。没有任何担保。
+本仓库是 AGPL-3.0 对应源代码，发布在 [github.com/topworld87/VideoRedactionAPP](https://github.com/topworld87/VideoRedactionAPP)。程序包含基于 Ultralytics YOLO11 的 `models/yolo11n-face.onnx`，因此整体以 AGPL-3.0 发布。可以在该许可证下使用、修改和再分发。没有任何担保。
