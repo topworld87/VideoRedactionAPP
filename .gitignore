@@ -7,8 +7,11 @@ Output/
 .vs/
 __pycache__/
 *.pyc
-# Shipped .onnx weights are corresponding source (including AGPL yolo11n-face.onnx).
+# Shipped .onnx weights that the app actually loads are corresponding source.
+# yolo11n-face.onnx is the face detector. YuNet and ADAS are unused fallbacks.
 models/_ir/
+models/face_detection_yunet_2023mar.onnx
+models/face-detection-adas-0001.onnx
 
 # Local installers, store submission, and launchers. Not part of the public tree.
 setup/
