@@ -2,9 +2,9 @@
 
 Video redaction permanently hides faces, license plates, and other identifiers in a video before that file is shared. [Video Blackout](https://videoredaction.io/en) is Windows software for video redaction. Detection and export run on the PC that opened the file. The original stays untouched, and the footage is not uploaded.
 
-**[Download Video Redaction for Windows](https://videoredaction.io/en/download)**
+**[Download Video Redaction for Windows](https://download.videoredaction.io/Windows/VideoBlackout_Setup_Latest.exe)**
 
-Install from the website. The download page has the Windows installer and the Microsoft Store listing. Plans and account billing are on the site as well: [videoredaction.io](https://videoredaction.io/en).
+The installer is [VideoBlackout_Setup_Latest.exe](https://download.videoredaction.io/Windows/VideoBlackout_Setup_Latest.exe). A short demo is on [YouTube](https://youtu.be/4IhzOoiILjc). Plans and account billing are on the site: [videoredaction.io](https://videoredaction.io/en). The [download page](https://videoredaction.io/en/download) links to the same installer.
 
 ![Video Redaction software from videoredaction.io: automatic detection, preview, batch processing, and local privacy](docs/video-redaction-banner-wide.jpg)
 
@@ -13,7 +13,8 @@ Install from the website. The download page has the Windows installer and the Mi
 | | |
 | --- | --- |
 | Video Redaction home | [videoredaction.io](https://videoredaction.io/en) |
-| Windows download | [Download Video Blackout](https://videoredaction.io/en/download) |
+| Windows installer | [VideoBlackout_Setup_Latest.exe](https://download.videoredaction.io/Windows/VideoBlackout_Setup_Latest.exe) |
+| Demo | [YouTube](https://youtu.be/4IhzOoiILjc) |
 | Plans | [Pricing](https://videoredaction.io/en/pricing) |
 | Support | [support@videoredaction.io](mailto:support@videoredaction.io) |
 
@@ -58,7 +59,7 @@ A category overview is on [video redaction software](https://videoredaction.io/e
 Video redaction hides identifying detail in the video file itself. Video Blackout writes that mask into a new MP4. It is not a player overlay.
 
 **Where do I install Video Redaction?**  
-Download it from [videoredaction.io/download](https://videoredaction.io/en/download). That page is the install path for Windows.
+Download [VideoBlackout_Setup_Latest.exe](https://download.videoredaction.io/Windows/VideoBlackout_Setup_Latest.exe). The same file is linked from [videoredaction.io/download](https://videoredaction.io/en/download).
 
 **Does the video leave this PC?**  
 No. Face and plate detection, preview, and export stay on the computer that opened the file. The website is for download, plans, and the account.
@@ -81,12 +82,12 @@ cmake --build build --config Release
 dotnet build ui\VideoBlackout.Wpf.csproj -c Release
 ```
 
-The executable is `bin\VideoBlackout.Wpf.exe`. For a normal install, use the [website download](https://videoredaction.io/en/download) instead of building.
+The executable is `bin\VideoBlackout.Wpf.exe`. For a normal install, download [VideoBlackout_Setup_Latest.exe](https://download.videoredaction.io/Windows/VideoBlackout_Setup_Latest.exe) instead of building.
 
 ## 中文
 
 [Video Blackout](https://videoredaction.io/zh-CN) 是 Windows 上的视频脱敏软件，对应英文检索词 Video Redaction。人脸和车牌在本机检测，漏检的区域可以手动画框。导出的是新的 H.264 MP4，打码写进画面，原片不改，视频不上传。
 
-请到网站下载安装：[videoredaction.io/zh-CN/download](https://videoredaction.io/zh-CN/download)。价格与账号也在网站上。支持邮箱 [support@videoredaction.io](mailto:support@videoredaction.io)。
+Windows 安装包：[VideoBlackout_Setup_Latest.exe](https://download.videoredaction.io/Windows/VideoBlackout_Setup_Latest.exe)。演示视频在 [YouTube](https://youtu.be/4IhzOoiILjc)。网站下载页是 [videoredaction.io/zh-CN/download](https://videoredaction.io/zh-CN/download)。价格与账号也在网站上。支持邮箱 [support@videoredaction.io](mailto:support@videoredaction.io)。
 
 本仓库是 AGPL-3.0 对应源代码，发布在 [github.com/topworld87/VideoRedactionAPP](https://github.com/topworld87/VideoRedactionAPP)。程序包含基于 Ultralytics YOLO11 的 `models/yolo11n-face.onnx`，因此整体以 AGPL-3.0 发布。可以在该许可证下使用、修改和再分发。没有任何担保。
