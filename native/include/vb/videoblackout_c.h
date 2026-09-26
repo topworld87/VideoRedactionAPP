@@ -31,6 +31,13 @@ typedef struct VbTrackC {
   float reidScore;
 } VbTrackC;
 
+typedef struct VbAudioRangeC {
+  int id;
+  double startSec;
+  double endSec;
+  int effect; /* 0 = mute, 1 = beep */
+} VbAudioRangeC;
+
 typedef void (*VbFrameFn)(void* user, const unsigned char* rgb, int width,
                           int height, int stride, long long frameIndex,
                           double ptsSec);
@@ -77,6 +84,15 @@ VB_API void vb_reject_identity(VbSession session, int trackId);
 VB_API void vb_clear_gallery(VbSession session);
 VB_API const char* vb_runtime_status(VbSession session);
 VB_API const char* vb_dump_detect_debug(VbSession session);
+VB_API int vb_add_audio_range(VbSession session, double startSec, double endSec,
+                              int effect);
+VB_API int vb_update_audio_range(VbSession session, int id, double startSec,
+                                 double endSec, int effect);
+VB_API void vb_remove_audio_range(VbSession session, int id);
+VB_API void vb_clear_audio_ranges(VbSession session);
+VB_API int vb_audio_range_count(VbSession session);
+VB_API int vb_get_audio_ranges(VbSession session, VbAudioRangeC* out, int maxCount);
+
 VB_API int vb_export(VbSession session, const char* outputUtf8, int watermark);
 VB_API void vb_cancel_export(VbSession session);
 

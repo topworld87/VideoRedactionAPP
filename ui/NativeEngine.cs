@@ -49,6 +49,15 @@ internal sealed class NativeEngine : IDisposable
         public float ReidScore;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct AudioRangeC
+    {
+        public int Id;
+        public double StartSec;
+        public double EndSec;
+        public int Effect;
+    }
+
     [DllImport(Dll, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr vb_session_create();
 
@@ -137,6 +146,20 @@ internal sealed class NativeEngine : IDisposable
     [DllImport(Dll, CallingConvention = CallingConvention.Cdecl)]
     private static extern void vb_clear_gallery(IntPtr session);
 
+    [DllImport(Dll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "vb_add_audio_range")]
+    private static extern int vb_add_audio_range_raw(IntPtr session, double startSec, double endSec,
+        int effect);
+
+    [DllImport(Dll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "vb_update_audio_range")]
+    private static extern int vb_update_audio_range_raw(IntPtr session, int id, double startSec,
+        double endSec, int effect);
+
+    [DllImport(Dll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "vb_remove_audio_range")]
+    private static extern void vb_remove_audio_range_raw(IntPtr session, int id);
+
+    [DllImport(Dll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "vb_clear_audio_ranges")]
+    private static extern void vb_clear_audio_ranges_raw(IntPtr session);
+
     [DllImport(Dll, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr vb_runtime_status(IntPtr session);
 
@@ -216,6 +239,68 @@ internal sealed class NativeEngine : IDisposable
     public void ConfirmIdentity(int trackId) => vb_confirm_identity(_session, trackId);
     public void RejectIdentity(int trackId) => vb_reject_identity(_session, trackId);
     public void ClearGallery() => vb_clear_gallery(_session);
+
+    /// <summary>False when the loaded core DLL predates the audio API.</summary>
+    public bool AudioApiAvailable { get; private set; } = true;
+
+    public int AddAudioRange(double startSec, double endSec, int effect)
+    {
+        if (!AudioApiAvailable)
+            return 0;
+        try
+        {
+            return vb_add_audio_range_raw(_session, startSec, endSec, effect);
+        }
+        catch (EntryPointNotFoundException)
+        {
+            AudioApiAvailable = false;
+            return 0;
+        }
+    }
+
+    public bool UpdateAudioRange(int id, double startSec, double endSec, int effect)
+    {
+        if (!AudioApiAvailable)
+            return false;
+        try
+        {
+            return vb_update_audio_range_raw(_session, id, startSec, endSec, effect) != 0;
+        }
+        catch (EntryPointNotFoundException)
+        {
+            AudioApiAvailable = false;
+            return false;
+        }
+    }
+
+    public void RemoveAudioRange(int id)
+    {
+        if (!AudioApiAvailable)
+            return;
+        try
+        {
+            vb_remove_audio_range_raw(_session, id);
+        }
+        catch (EntryPointNotFoundException)
+        {
+            AudioApiAvailable = false;
+        }
+    }
+
+    public void ClearAudioRanges()
+    {
+        if (!AudioApiAvailable)
+            return;
+        try
+        {
+            vb_clear_audio_ranges_raw(_session);
+        }
+        catch (EntryPointNotFoundException)
+        {
+            AudioApiAvailable = false;
+        }
+    }
+
     public string RuntimeStatus()
     {
         var p = vb_runtime_status(_session);

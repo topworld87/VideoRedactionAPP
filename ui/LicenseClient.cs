@@ -380,9 +380,17 @@ public sealed class LicenseClient
                 return null;
             }
             await WriteAsync(stream, 200, """
-                <!doctype html><html><body style="font-family:Segoe UI,sans-serif;padding:32px">
+                <!doctype html><html><head><meta charset="utf-8"><title>Signed in</title></head>
+                <body style="font-family:Segoe UI,sans-serif;padding:32px">
                 <h1>Signed in</h1>
-                <p>You can close this tab and return to Video Blackout.</p>
+                <p>Returning to Video Blackout…</p>
+                <script>
+                try { window.close(); } catch (e) {}
+                setTimeout(function () {
+                  try { window.close(); } catch (e) {}
+                  document.body.innerHTML = '<h1>Signed in</h1><p>You can close this tab and return to Video Blackout.</p>';
+                }, 400);
+                </script>
                 </body></html>
                 """).ConfigureAwait(false);
             return form;

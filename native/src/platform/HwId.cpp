@@ -5,60 +5,121 @@
 #define NOMINMAX
 #endif
 #include <Windows.h>
-#include <bcrypt.h>
-#include <intrin.h>
-#pragma comment(lib, "bcrypt.lib")
 #endif
 
+#include <cstdio>
 #include <string>
 #include <vector>
 
 namespace vb {
 
+#ifdef _WIN32
+
+static bool readMachineGuid(std::string& out) {
+  HKEY key = nullptr;
+  if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Cryptography", 0,
+                    KEY_READ | KEY_WOW64_64KEY, &key) != ERROR_SUCCESS) {
+    return false;
+  }
+  wchar_t buf[128] = {};
+  DWORD bytes = sizeof(buf);
+  DWORD type = 0;
+  const LONG st =
+      RegQueryValueExW(key, L"MachineGuid", nullptr, &type, reinterpret_cast<LPBYTE>(buf), &bytes);
+  RegCloseKey(key);
+  if (st != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ))
+    return false;
+  out = wideToUtf8(buf);
+  return !out.empty();
+}
+
+static bool uuidAllZero(const unsigned char* u) {
+  for (int i = 0; i < 16; ++i) {
+    if (u[i] != 0)
+      return false;
+  }
+  return true;
+}
+
+static bool uuidAllOnes(const unsigned char* u) {
+  for (int i = 0; i < 16; ++i) {
+    if (u[i] != 0xff)
+      return false;
+  }
+  return true;
+}
+
+/** Same source as OfflineRedactor: `wmic csproduct get uuid` / Win32_ComputerSystemProduct.UUID */
+static bool readSmbiosSystemUuid(std::string& out) {
+  const DWORD need = GetSystemFirmwareTable('RSMB', 0, nullptr, 0);
+  if (need == 0)
+    return false;
+
+  std::vector<unsigned char> buf(need);
+  if (GetSystemFirmwareTable('RSMB', 0, buf.data(), need) != need)
+    return false;
+  if (buf.size() < 8)
+    return false;
+
+  // RawSMBIOSData: 4 byte header + DWORD Length + table bytes
+  const DWORD tableLen = *reinterpret_cast<DWORD*>(buf.data() + 4);
+  if (tableLen == 0 || 8 + tableLen > buf.size())
+    return false;
+
+  const unsigned char* p = buf.data() + 8;
+  const unsigned char* end = p + tableLen;
+
+  while (p + 4 <= end) {
+    const unsigned char type = p[0];
+    const unsigned char length = p[1];
+    if (length < 4)
+      break;
+    if (p + length > end)
+      break;
+
+    if (type == 1 && length >= 0x19) {
+      const unsigned char* uuid = p + 0x08;
+      if (!uuidAllZero(uuid) && !uuidAllOnes(uuid)) {
+        // SMBIOS UUID byte order matches what `wmic csproduct get uuid` prints.
+        char text[64];
+        std::snprintf(
+            text, sizeof(text),
+            "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+            uuid[3], uuid[2], uuid[1], uuid[0], uuid[5], uuid[4], uuid[7], uuid[6], uuid[8],
+            uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
+        out = text;
+        return true;
+      }
+    }
+
+    // Skip formatted area + trailing string-set (double NUL terminated).
+    const unsigned char* q = p + length;
+    while (q + 1 < end && !(q[0] == 0 && q[1] == 0))
+      ++q;
+    if (q + 1 >= end)
+      break;
+    p = q + 2;
+  }
+  return false;
+}
+
+#endif
+
 std::string currentHwId() {
 #ifdef _WIN32
-  DWORD serial = 0;
-  GetVolumeInformationW(L"C:\\", nullptr, 0, &serial, nullptr, nullptr, nullptr, 0);
+  // Match OfflineRedactor/presidio-main platform_support._hwid_windows():
+  // durable SMBIOS system UUID (same value as `wmic csproduct get uuid`).
+  // Do NOT mix computer name / C: volume serial — those caused different hashes
+  // on an unchanged PC.
+  std::string id;
+  if (readSmbiosSystemUuid(id))
+    return id;
 
-  int cpuInfo[4] = {0};
-  __cpuid(cpuInfo, 0);
-  std::vector<unsigned char> raw;
-  raw.insert(raw.end(), reinterpret_cast<unsigned char*>(&serial),
-             reinterpret_cast<unsigned char*>(&serial) + sizeof(serial));
-  raw.insert(raw.end(), reinterpret_cast<unsigned char*>(cpuInfo),
-             reinterpret_cast<unsigned char*>(cpuInfo) + sizeof(cpuInfo));
-  __cpuid(cpuInfo, 1);
-  raw.insert(raw.end(), reinterpret_cast<unsigned char*>(cpuInfo),
-             reinterpret_cast<unsigned char*>(cpuInfo) + sizeof(cpuInfo));
+  // Fallback when firmware UUID is missing/all-zero (some VMs / odd boards).
+  if (readMachineGuid(id))
+    return id;
 
-  wchar_t host[MAX_COMPUTERNAME_LENGTH + 1] = {};
-  DWORD n = MAX_COMPUTERNAME_LENGTH + 1;
-  GetComputerNameW(host, &n);
-  const std::string hostUtf8 = wideToUtf8(host);
-  raw.insert(raw.end(), hostUtf8.begin(), hostUtf8.end());
-
-  BCRYPT_ALG_HANDLE alg = nullptr;
-  BCRYPT_HASH_HANDLE hash = nullptr;
-  if (BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA256_ALGORITHM, nullptr, 0) != 0)
-    return {};
-  if (BCryptCreateHash(alg, &hash, nullptr, 0, nullptr, 0, 0) != 0) {
-    BCryptCloseAlgorithmProvider(alg, 0);
-    return {};
-  }
-  BCryptHashData(hash, raw.data(), static_cast<ULONG>(raw.size()), 0);
-  unsigned char digest[32];
-  BCryptFinishHash(hash, digest, 32, 0);
-  BCryptDestroyHash(hash);
-  BCryptCloseAlgorithmProvider(alg, 0);
-
-  static const char* hex = "0123456789abcdef";
-  std::string out;
-  out.resize(64);
-  for (int i = 0; i < 32; ++i) {
-    out[static_cast<size_t>(i * 2)] = hex[digest[i] >> 4];
-    out[static_cast<size_t>(i * 2 + 1)] = hex[digest[i] & 0xf];
-  }
-  return out;
+  return {};
 #else
   return "unsupported-platform";
 #endif

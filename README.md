@@ -74,7 +74,7 @@ This program includes `models/yolo11n-face.onnx`, a face-detection model based o
 
 This repository is the corresponding source for this version: the application source and the model files that ship with the program, including `yolo11n-face.onnx`. It is published at [github.com/topworld87/VideoRedactionAPP](https://github.com/topworld87/VideoRedactionAPP). The same source is offered at no charge from [videoredaction.io](https://videoredaction.io/en) and by writing to support@videoredaction.io for at least three years after you receive a given version.
 
-To build the Windows app from this tree, install Visual Studio 2022 with C++ and CMake, plus the .NET 8 SDK. The native project links OpenCV 4.10 and ONNX Runtime from a sibling `app` directory (`../app/opencv` and `../app/third_party/onnxruntime`). From this folder:
+To build the Windows app from this tree, install Visual Studio 2022 with C++ and CMake, plus the .NET 8 SDK. Native deps live under this folder: `opencv/` (OpenCV 4.10) and `third_party/onnxruntime/`. FFmpeg is at `tools/ffmpeg/ffmpeg.exe`. From this folder:
 
 ```bat
 cmake -B build -G "Visual Studio 17 2022" -A x64

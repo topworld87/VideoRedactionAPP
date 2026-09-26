@@ -127,9 +127,29 @@
       </DockPanel>
     </Border>
 
-    <Border x:Name="TimelineHost" DockPanel.Dock="Bottom" Background="#12171F" Height="120" BorderBrush="#232B36" BorderThickness="0,1,0,0">
-      <local:FilmstripTimeline x:Name="Timeline" Margin="16,4,16,12" IsEnabled="False"
-                               WindowChrome.IsHitTestVisibleInChrome="True"/>
+    <Border x:Name="TimelineHost" DockPanel.Dock="Bottom" Background="#12171F" Height="176" BorderBrush="#232B36" BorderThickness="0,1,0,0">
+      <DockPanel>
+        <Border DockPanel.Dock="Top" Background="#141A22" Height="32" BorderBrush="#232B36" BorderThickness="0,0,0,1">
+          <DockPanel Margin="16,0,16,0">
+            <TextBlock x:Name="AudioHint" DockPanel.Dock="Left" VerticalAlignment="Center"
+                       Foreground="#8B95A5" FontSize="11"
+                       Text="{local:Tr audioHint}"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+              <ToggleButton x:Name="AudioMuteBtn" Content="{local:Tr audioMute}" IsChecked="True"
+                            ToolTip="{local:Tr tipAudioMute}" Click="OnAudioMute" Padding="10,4"
+                            Margin="0,0,6,0"/>
+              <ToggleButton x:Name="AudioBeepBtn" Content="{local:Tr audioBeep}"
+                            ToolTip="{local:Tr tipAudioBeep}" Click="OnAudioBeep" Padding="10,4"
+                            Margin="0,0,10,0"/>
+              <Button x:Name="AudioDeleteBtn" Content="{local:Tr audioDelete}"
+                      ToolTip="{local:Tr tipAudioDelete}" Click="OnAudioDelete" Padding="10,4"
+                      IsEnabled="False"/>
+            </StackPanel>
+          </DockPanel>
+        </Border>
+        <local:FilmstripTimeline x:Name="Timeline" Margin="16,2,16,8" IsEnabled="False"
+                                 WindowChrome.IsHitTestVisibleInChrome="True"/>
+      </DockPanel>
     </Border>
 
     <Border x:Name="FilePanel" DockPanel.Dock="Left" Width="320" Background="#12171F" BorderBrush="#232B36"
@@ -299,9 +319,15 @@
                        VerticalAlignment="Center" Margin="14,0,0,0" Text="00:00:00:00"
                        ToolTip="Left and right arrows step one frame. Shift steps one second."/>
           </StackPanel>
-          <Button x:Name="PlayBtn" Grid.Column="1" Content="▶" Width="44" Height="28" Padding="0"
-                  Click="OnPlayPause" FontSize="13" VerticalAlignment="Center" IsEnabled="False"
-                  ToolTip="Preview only — does not process or save the video"/>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <Button x:Name="PlayBtn" Content="▶" Width="44" Height="28" Padding="0"
+                    Click="OnPlayPause" FontSize="13" IsEnabled="False"
+                    ToolTip="Preview only — does not process or save the video"/>
+            <ToggleButton x:Name="PreviewMuteBtn" Margin="8,0,0,0" Width="36" Height="28" Padding="0"
+                          FontFamily="Segoe MDL2 Assets" FontSize="13" Content="&#xE767;"
+                          ToolTip="{local:Tr tipPreviewMute}" Click="OnPreviewMute"
+                          IsEnabled="False"/>
+          </StackPanel>
           <Button x:Name="PreviewMaxBtn" Grid.Column="2" HorizontalAlignment="Right" Margin="0,0,10,0"
                   Width="32" Height="28" Padding="0" Click="OnPreviewMaximize" VerticalAlignment="Center"
                   FontFamily="Segoe MDL2 Assets" FontSize="12" Content="&#xE740;"

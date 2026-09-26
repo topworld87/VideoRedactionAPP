@@ -1,5 +1,6 @@
 #include "vb/videoblackout_c.h"
 
+#include "vb/AudioRedactionItem.h"
 #include "vb/ExportEngine.h"
 #include "vb/FfmpegAudioTools.h"
 #include "vb/HardwareInfo.h"
@@ -7,6 +8,7 @@
 #include "vb/Settings.h"
 #include "vb/platform/HwId.h"
 
+#include <algorithm>
 #include <cstring>
 #include <mutex>
 #include <opencv2/core.hpp>
@@ -14,6 +16,10 @@
 #include <vector>
 
 namespace {
+
+vb::AudioEffect toEffect(int effect) {
+  return effect == 1 ? vb::AudioEffect::Beep : vb::AudioEffect::Mute;
+}
 
 struct Session {
   vb::PreviewEngine preview;
@@ -31,6 +37,8 @@ struct Session {
   int mode = 0;
   bool faces = true;
   bool yolo = true;
+  int nextAudioId = 1;
+  std::vector<vb::AudioRedactionItem> audioRanges;
   std::mutex mu;
 
   Session() {
@@ -146,6 +154,8 @@ int vb_open(VbSession session, const char* videoUtf8) {
   if (!s || !videoUtf8)
     return 0;
   s->videoPath = videoUtf8;
+  s->audioRanges.clear();
+  s->nextAudioId = 1;
   s->preview.setFacesEnabled(s->faces);
   s->preview.setYoloEnabled(s->yolo);
   s->preview.setRedactionMode(static_cast<vb::RedactionMode>(s->mode));
@@ -158,8 +168,11 @@ int vb_open(VbSession session, const char* videoUtf8) {
 }
 
 void vb_close(VbSession session) {
-  if (auto* s = as(session))
+  if (auto* s = as(session)) {
+    s->audioRanges.clear();
+    s->nextAudioId = 1;
     s->preview.closeVideo();
+  }
 }
 void vb_play(VbSession session) {
   if (auto* s = as(session))
@@ -263,6 +276,79 @@ const char* vb_dump_detect_debug(VbSession session) {
   return path.c_str();
 }
 
+int vb_add_audio_range(VbSession session, double startSec, double endSec,
+                       int effect) {
+  auto* s = as(session);
+  if (!s)
+    return 0;
+  if (endSec < startSec)
+    std::swap(startSec, endSec);
+  vb::AudioRedactionItem item;
+  item.id = s->nextAudioId++;
+  item.start_time_sec = std::max(0.0, startSec);
+  item.end_time_sec = std::max(item.start_time_sec + 0.05, endSec);
+  item.effect = toEffect(effect);
+  if (!item.valid())
+    return 0;
+  s->audioRanges.push_back(item);
+  return item.id;
+}
+
+int vb_update_audio_range(VbSession session, int id, double startSec,
+                          double endSec, int effect) {
+  auto* s = as(session);
+  if (!s)
+    return 0;
+  if (endSec < startSec)
+    std::swap(startSec, endSec);
+  for (auto& item : s->audioRanges) {
+    if (item.id != id)
+      continue;
+    item.start_time_sec = std::max(0.0, startSec);
+    item.end_time_sec = std::max(item.start_time_sec + 0.05, endSec);
+    item.effect = toEffect(effect);
+    return item.valid() ? 1 : 0;
+  }
+  return 0;
+}
+
+void vb_remove_audio_range(VbSession session, int id) {
+  auto* s = as(session);
+  if (!s)
+    return;
+  s->audioRanges.erase(
+      std::remove_if(s->audioRanges.begin(), s->audioRanges.end(),
+                     [id](const vb::AudioRedactionItem& r) { return r.id == id; }),
+      s->audioRanges.end());
+}
+
+void vb_clear_audio_ranges(VbSession session) {
+  if (auto* s = as(session)) {
+    s->audioRanges.clear();
+    s->nextAudioId = 1;
+  }
+}
+
+int vb_audio_range_count(VbSession session) {
+  auto* s = as(session);
+  return s ? static_cast<int>(s->audioRanges.size()) : 0;
+}
+
+int vb_get_audio_ranges(VbSession session, VbAudioRangeC* out, int maxCount) {
+  auto* s = as(session);
+  if (!s || !out || maxCount <= 0)
+    return 0;
+  const int n = std::min(maxCount, static_cast<int>(s->audioRanges.size()));
+  for (int i = 0; i < n; ++i) {
+    const auto& r = s->audioRanges[static_cast<size_t>(i)];
+    out[i].id = r.id;
+    out[i].startSec = r.start_time_sec;
+    out[i].endSec = r.end_time_sec;
+    out[i].effect = r.effect == vb::AudioEffect::Beep ? 1 : 0;
+  }
+  return n;
+}
+
 int vb_export(VbSession session, const char* outputUtf8, int watermark) {
   auto* s = as(session);
   if (!s || !outputUtf8 || s->videoPath.empty())
@@ -274,7 +360,7 @@ int vb_export(VbSession session, const char* outputUtf8, int watermark) {
                         vb::defaultReidModelPath(),
                         static_cast<vb::RedactionMode>(s->mode), s->faces, s->yolo,
                         s->preview.facePolicy(), s->preview.gallery(),
-                        s->preview.snapshot(), {}, watermark != 0);
+                        s->preview.snapshot(), s->audioRanges, watermark != 0);
   s->exporter.start(
       [s](int pct, const std::string& status) {
         if (s->onExportProgress)

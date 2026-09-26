@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
@@ -9,8 +11,12 @@ namespace VideoBlackout.Wpf;
 public sealed class FilmstripTimeline : FrameworkElement
 {
     private const double MaxFrameWidth = 100;
+    private const double AudioLane = 52;
+    private const double HandlePx = 6;
+    private const double MinRangeSec = 0.08;
 
     private readonly FilmstripLoader _loader;
+    private readonly WaveformLoader _waveform;
     private readonly DispatcherTimer _seekTimer;
     private readonly DispatcherTimer _detailTimer;
     private double _fps = 25;
@@ -28,6 +34,16 @@ public sealed class FilmstripTimeline : FrameworkElement
     private bool _barHot;
     private bool _zoomHint;
     private readonly DispatcherTimer _hintTimer;
+
+    private ObservableCollection<AudioRangeMark>? _audioRanges;
+    private int _selectedAudioId = -1;
+    private int _audioHitId = -1;
+    private double _audioAnchorSec;
+    private double _audioOrigStart;
+    private double _audioOrigEnd;
+    private double _draftStart;
+    private double _draftEnd;
+    private bool _hasDraft;
 
     public FilmstripTimeline()
     {
@@ -51,6 +67,8 @@ public sealed class FilmstripTimeline : FrameworkElement
             InvalidateVisual();
             ScheduleDetail();
         };
+        _waveform = new WaveformLoader(Dispatcher);
+        _waveform.Updated += () => InvalidateVisual();
 
         _seekTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(70) };
         _seekTimer.Tick += (_, _) => FlushSeek();
@@ -66,6 +84,15 @@ public sealed class FilmstripTimeline : FrameworkElement
     public event Action<long>? PositionChanged;
     public event Action? ScrubStarted;
     public event Action? ZoomChanged;
+    public event Action<double, double, int>? AudioRangeCreated;
+    public event Action<int, double, double>? AudioRangeChanged;
+    public event Action<int>? AudioRangeSelected;
+    public event Action<int>? AudioRangeDeleteRequested;
+
+    /// <summary>0 = mute, 1 = beep for newly drawn ranges.</summary>
+    public int NewRangeEffect { get; set; }
+
+    public int SelectedAudioId => _selectedAudioId;
 
     protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
     {
@@ -83,8 +110,8 @@ public sealed class FilmstripTimeline : FrameworkElement
     {
         get
         {
-        if (_frameCount <= 0 || ActualWidth < 1)
-            return "Scroll to zoom";
+            if (_frameCount <= 0 || ActualWidth < 1)
+                return "Scroll to zoom";
             if (_zoom < 0.001)
                 return "Whole video";
             if (PixelsPerFrame() >= 14)
@@ -96,6 +123,33 @@ public sealed class FilmstripTimeline : FrameworkElement
             return sec < 90 ? $"{sec:0.#} s" : $"{sec / 60:0.#} min";
         }
     }
+
+    public void BindAudioRanges(ObservableCollection<AudioRangeMark> ranges)
+    {
+        if (_audioRanges != null)
+            _audioRanges.CollectionChanged -= OnAudioCollectionChanged;
+        _audioRanges = ranges;
+        _audioRanges.CollectionChanged += OnAudioCollectionChanged;
+        _selectedAudioId = -1;
+        InvalidateVisual();
+    }
+
+    public void SetSelectedAudio(int id)
+    {
+        if (_selectedAudioId == id)
+            return;
+        _selectedAudioId = id;
+        InvalidateVisual();
+    }
+
+    public void ClearAudioSelection()
+    {
+        _selectedAudioId = -1;
+        InvalidateVisual();
+    }
+
+    private void OnAudioCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+        InvalidateVisual();
 
     public void SetVideo(string? path, double fps, long frameCount)
     {
@@ -111,10 +165,19 @@ public sealed class FilmstripTimeline : FrameworkElement
         _seekSent = -2;
         _scrubbing = false;
         _drag = DragMode.None;
+        _hasDraft = false;
+        _selectedAudioId = -1;
         if (string.IsNullOrEmpty(path) || _frameCount <= 0)
+        {
             _loader.Stop();
+            _waveform.Stop();
+        }
         else
+        {
             _loader.Start(path, _fps, _frameCount);
+            var dur = Math.Max(0.05, (_frameCount - 1) / Math.Max(0.1, _fps));
+            _waveform.Start(path, dur);
+        }
         ClampScroll();
         InvalidateVisual();
         ZoomChanged?.Invoke();
@@ -140,7 +203,10 @@ public sealed class FilmstripTimeline : FrameworkElement
     {
         _seekTimer.Stop();
         _detailTimer.Stop();
+        if (_audioRanges != null)
+            _audioRanges.CollectionChanged -= OnAudioCollectionChanged;
         _loader.Dispose();
+        _waveform.Dispose();
     }
 
     public static string FormatTimecode(long frame, double fps)
@@ -180,8 +246,14 @@ public sealed class FilmstripTimeline : FrameworkElement
             return;
         Focus();
         var p = e.GetPosition(this);
-        _scrubbing = true;
         CaptureMouse();
+        if (InAudioZone(p))
+        {
+            BeginAudioDrag(p);
+            e.Handled = true;
+            return;
+        }
+        _scrubbing = true;
         ScrubStarted?.Invoke();
         if (InBarZone(p))
         {
@@ -213,6 +285,13 @@ public sealed class FilmstripTimeline : FrameworkElement
             _barHot = hot;
             InvalidateVisual();
         }
+
+        if (_drag is DragMode.AudioCreate or DragMode.AudioMove or DragMode.AudioResizeStart
+            or DragMode.AudioResizeEnd)
+        {
+            UpdateAudioDrag(p.X);
+            return;
+        }
         if (_drag == DragMode.Seek)
         {
             SeekAt(p.X, immediate: false);
@@ -239,6 +318,17 @@ public sealed class FilmstripTimeline : FrameworkElement
     }
 
     protected override void OnLostMouseCapture(MouseEventArgs e) => EndDrag();
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.Key == Key.Delete && _selectedAudioId > 0)
+        {
+            AudioRangeDeleteRequested?.Invoke(_selectedAudioId);
+            e.Handled = true;
+            return;
+        }
+        base.OnKeyDown(e);
+    }
 
     protected override void OnMouseEnter(MouseEventArgs e)
     {
@@ -297,7 +387,9 @@ public sealed class FilmstripTimeline : FrameworkElement
         const double rulerH = 18;
         var showBar = TryBar(out var barX, out var barW);
         var barSpace = showBar ? BarLane : 0;
-        var film = new Rect(0, rulerH, width, Math.Max(0, height - rulerH - barSpace));
+        var audioSpace = _frameCount > 0 ? AudioLane : 0;
+        var film = new Rect(0, rulerH, width, Math.Max(0, height - rulerH - audioSpace - barSpace));
+        var audioRect = new Rect(0, film.Bottom, width, audioSpace);
         dc.DrawRectangle(RulerBg, null, new Rect(0, 0, width, rulerH));
         dc.DrawRectangle(FilmBg, null, film);
 
@@ -318,6 +410,9 @@ public sealed class FilmstripTimeline : FrameworkElement
         dc.DrawRoundedRectangle(null, FilmPen, film, 5, 5);
         DrawRuler(dc, width, rulerH, ppf);
 
+        if (audioSpace > 0)
+            DrawAudioLane(dc, audioRect, ppf);
+
         if (_hover >= 0 && _hover != _position && _drag != DragMode.Seek)
         {
             var hx = (_hover - _scroll) * ppf;
@@ -329,7 +424,7 @@ public sealed class FilmstripTimeline : FrameworkElement
         if (px >= -1 && px <= width + 1)
         {
             var x = Snap(px);
-            dc.DrawLine(PlayPen, new Point(x, 0), new Point(x, film.Bottom));
+            dc.DrawLine(PlayPen, new Point(x, 0), new Point(x, film.Bottom + audioSpace));
             var head = new StreamGeometry();
             using (var g = head.Open())
             {
@@ -355,6 +450,264 @@ public sealed class FilmstripTimeline : FrameworkElement
             dc.Pop();
     }
 
+    private void DrawAudioLane(DrawingContext dc, Rect lane, double ppf)
+    {
+        dc.DrawRoundedRectangle(AudioLaneBg, AudioLaneEdge, lane, 4, 4);
+        dc.PushClip(new RectangleGeometry(lane, 4, 4));
+        DrawWaveform(dc, lane, ppf);
+
+        if (_audioRanges != null)
+        {
+            foreach (var r in _audioRanges)
+                DrawAudioRange(dc, lane, ppf, r.StartSec, r.EndSec, r.Effect, r.Id == _selectedAudioId);
+        }
+        if (_hasDraft)
+            DrawAudioRange(dc, lane, ppf, _draftStart, _draftEnd, NewRangeEffect, true);
+        dc.Pop();
+
+        var label = Text(L.T("audioLane"), 11, AudioLabelBrush);
+        var lw = label.Width + 10;
+        var lh = label.Height + 4;
+        dc.DrawRoundedRectangle(AudioLabelBg, null, new Rect(6, lane.Y + 3, lw, lh), 3, 3);
+        dc.DrawText(label, new Point(11, lane.Y + 4));
+
+        var peaks = _waveform.Peaks;
+        if (peaks.Count == 0 && !_waveform.Ready && _audioRanges is { Count: 0 } && !_hasDraft)
+        {
+            var hint = Text(L.T("audioWaveLoading"), 11, AudioHintBrush);
+            dc.DrawText(hint, new Point(Math.Max(8, (lane.Width - hint.Width) / 2),
+                lane.Y + (lane.Height - hint.Height) / 2));
+        }
+        else if (_waveform.Ready && !(_waveform.HasAudio) && _audioRanges is { Count: 0 } && !_hasDraft)
+        {
+            var hint = Text(L.T("audioWaveEmpty"), 11, AudioHintBrush);
+            dc.DrawText(hint, new Point(Math.Max(8, (lane.Width - hint.Width) / 2),
+                lane.Y + (lane.Height - hint.Height) / 2));
+        }
+        else if (peaks.Count == 0 && _audioRanges is { Count: 0 } && !_hasDraft)
+        {
+            var hint = Text(L.T("audioLaneHint"), 11, AudioHintBrush);
+            dc.DrawText(hint, new Point(Math.Max(8, (lane.Width - hint.Width) / 2),
+                lane.Y + (lane.Height - hint.Height) / 2));
+        }
+    }
+
+    private void DrawWaveform(DrawingContext dc, Rect lane, double ppf)
+    {
+        var peaks = _waveform.Peaks;
+        if (peaks.Count == 0 || _frameCount <= 0 || ppf <= 0 || lane.Width < 2)
+            return;
+
+        var mid = lane.Y + lane.Height * 0.5;
+        var amp = Math.Max(4, lane.Height * 0.42);
+        var durationFrames = Math.Max(1.0, _frameCount - 1);
+        var geo = new StreamGeometry { FillRule = FillRule.Nonzero };
+        using (var g = geo.Open())
+        {
+            var started = false;
+            // Top edge left → right
+            for (var x = 0.0; x <= lane.Width + 0.5; x += 1.0)
+            {
+                var frame = _scroll + x / ppf;
+                var t = Math.Clamp(frame / durationFrames, 0, 1);
+                var peak = SamplePeak(peaks, t);
+                var y = mid - peak * amp;
+                if (!started)
+                {
+                    g.BeginFigure(new Point(x, y), true, true);
+                    started = true;
+                }
+                else
+                    g.LineTo(new Point(x, y), true, false);
+            }
+            // Bottom edge right → left (mirror)
+            for (var x = lane.Width; x >= -0.5; x -= 1.0)
+            {
+                var frame = _scroll + x / ppf;
+                var t = Math.Clamp(frame / durationFrames, 0, 1);
+                var peak = SamplePeak(peaks, t);
+                g.LineTo(new Point(x, mid + peak * amp), true, false);
+            }
+        }
+        geo.Freeze();
+        dc.DrawGeometry(WaveFill, null, geo);
+
+        // Center line
+        dc.DrawLine(WaveCenterPen, new Point(0, mid), new Point(lane.Width, mid));
+    }
+
+    private static float SamplePeak(IReadOnlyList<float> peaks, double t)
+    {
+        if (peaks.Count == 0)
+            return 0;
+        if (peaks.Count == 1)
+            return peaks[0];
+        var pos = t * (peaks.Count - 1);
+        var i = (int)Math.Floor(pos);
+        if (i < 0)
+            return peaks[0];
+        if (i >= peaks.Count - 1)
+            return peaks[^1];
+        var f = (float)(pos - i);
+        return peaks[i] * (1 - f) + peaks[i + 1] * f;
+    }
+
+    private void DrawAudioRange(DrawingContext dc, Rect lane, double ppf, double startSec, double endSec,
+        int effect, bool selected)
+    {
+        var x0 = (startSec * _fps - _scroll) * ppf;
+        var x1 = (endSec * _fps - _scroll) * ppf;
+        if (x1 < x0)
+            (x0, x1) = (x1, x0);
+        if (x1 < 0 || x0 > lane.Width)
+            return;
+        var fill = effect == 1 ? BeepFill : MuteFill;
+        var border = effect == 1 ? BeepPen : MutePen;
+        var y = lane.Y + 4;
+        var h = lane.Height - 8;
+        var rect = new Rect(x0, y, Math.Max(2, x1 - x0), h);
+        dc.DrawRoundedRectangle(fill, selected ? SelectedAudioPen : border, rect, 3, 3);
+        if (rect.Width >= HandlePx * 2)
+        {
+            dc.DrawRectangle(HandleFill, null, new Rect(rect.X, rect.Y, 3, rect.Height));
+            dc.DrawRectangle(HandleFill, null, new Rect(rect.Right - 3, rect.Y, 3, rect.Height));
+        }
+    }
+
+    private void BeginAudioDrag(Point p)
+    {
+        ScrubStarted?.Invoke();
+        var sec = SecAt(p.X);
+        var hit = HitAudio(p.X, out var edge);
+        if (hit != null)
+        {
+            _audioHitId = hit.Id;
+            _selectedAudioId = hit.Id;
+            AudioRangeSelected?.Invoke(hit.Id);
+            _audioOrigStart = hit.StartSec;
+            _audioOrigEnd = hit.EndSec;
+            _audioAnchorSec = sec;
+            _draftStart = hit.StartSec;
+            _draftEnd = hit.EndSec;
+            _hasDraft = true;
+            _drag = edge switch
+            {
+                -1 => DragMode.AudioResizeStart,
+                1 => DragMode.AudioResizeEnd,
+                _ => DragMode.AudioMove
+            };
+            InvalidateVisual();
+            return;
+        }
+
+        _audioHitId = -1;
+        _selectedAudioId = -1;
+        AudioRangeSelected?.Invoke(-1);
+        _audioAnchorSec = sec;
+        _draftStart = sec;
+        _draftEnd = sec;
+        _hasDraft = true;
+        _drag = DragMode.AudioCreate;
+        InvalidateVisual();
+    }
+
+    private void UpdateAudioDrag(double x)
+    {
+        var sec = SecAt(x);
+        var maxSec = DurationSec();
+        switch (_drag)
+        {
+            case DragMode.AudioCreate:
+                _draftStart = Math.Min(_audioAnchorSec, sec);
+                _draftEnd = Math.Max(_audioAnchorSec, sec);
+                break;
+            case DragMode.AudioMove:
+            {
+                var dur = _audioOrigEnd - _audioOrigStart;
+                var delta = sec - _audioAnchorSec;
+                var start = Math.Clamp(_audioOrigStart + delta, 0, Math.Max(0, maxSec - dur));
+                _draftStart = start;
+                _draftEnd = start + dur;
+                break;
+            }
+            case DragMode.AudioResizeStart:
+                _draftStart = Math.Clamp(sec, 0, _audioOrigEnd - MinRangeSec);
+                _draftEnd = _audioOrigEnd;
+                break;
+            case DragMode.AudioResizeEnd:
+                _draftStart = _audioOrigStart;
+                _draftEnd = Math.Clamp(sec, _audioOrigStart + MinRangeSec, maxSec);
+                break;
+        }
+        InvalidateVisual();
+    }
+
+    private void CommitAudioDrag()
+    {
+        if (!_hasDraft)
+            return;
+        var start = Math.Min(_draftStart, _draftEnd);
+        var end = Math.Max(_draftStart, _draftEnd);
+        _hasDraft = false;
+        if (end - start < MinRangeSec)
+        {
+            InvalidateVisual();
+            return;
+        }
+        start = Math.Max(0, start);
+        end = Math.Min(DurationSec(), end);
+        if (end - start < MinRangeSec)
+        {
+            InvalidateVisual();
+            return;
+        }
+
+        if (_drag == DragMode.AudioCreate)
+            AudioRangeCreated?.Invoke(start, end, NewRangeEffect);
+        else if (_audioHitId > 0)
+            AudioRangeChanged?.Invoke(_audioHitId, start, end);
+        InvalidateVisual();
+    }
+
+    private AudioRangeMark? HitAudio(double x, out int edge)
+    {
+        edge = 0;
+        if (_audioRanges == null || _audioRanges.Count == 0)
+            return null;
+        var ppf = PixelsPerFrame();
+        AudioRangeMark? body = null;
+        foreach (var r in _audioRanges)
+        {
+            var x0 = (r.StartSec * _fps - _scroll) * ppf;
+            var x1 = (r.EndSec * _fps - _scroll) * ppf;
+            if (x1 < x0)
+                (x0, x1) = (x1, x0);
+            if (x < x0 - 2 || x > x1 + 2)
+                continue;
+            if (Math.Abs(x - x0) <= HandlePx)
+            {
+                edge = -1;
+                return r;
+            }
+            if (Math.Abs(x - x1) <= HandlePx)
+            {
+                edge = 1;
+                return r;
+            }
+            body = r;
+        }
+        return body;
+    }
+
+    private double SecAt(double x)
+    {
+        var frame = FrameAt(x);
+        return frame / Math.Max(0.1, _fps);
+    }
+
+    private double DurationSec() =>
+        _frameCount <= 0 ? 0 : Math.Max(0, (_frameCount - 1) / Math.Max(0.1, _fps));
+
     private void UpdateCursor(Point p)
     {
         if (!IsEnabled || _frameCount <= 0)
@@ -363,12 +716,36 @@ public sealed class FilmstripTimeline : FrameworkElement
             ForceCursor = false;
             return;
         }
+        if (_drag is DragMode.AudioResizeStart or DragMode.AudioResizeEnd
+            || (InAudioZone(p) && HitAudio(p.X, out var edge) != null && edge != 0))
+        {
+            Cursor = Cursors.SizeWE;
+            ForceCursor = true;
+            return;
+        }
+        if (InAudioZone(p) || _drag is DragMode.AudioCreate or DragMode.AudioMove)
+        {
+            Cursor = Cursors.IBeam;
+            ForceCursor = true;
+            return;
+        }
         Cursor = InBarZone(p) || _drag == DragMode.Pan ? Cursors.SizeAll : Cursors.Hand;
         ForceCursor = true;
     }
 
     private bool InBarZone(Point p) =>
         TryBar(out _, out _) && p.Y >= ActualHeight - BarLane - 6;
+
+    private bool InAudioZone(Point p)
+    {
+        if (_frameCount <= 0)
+            return false;
+        var showBar = TryBar(out _, out _);
+        var barSpace = showBar ? BarLane : 0;
+        var top = ActualHeight - barSpace - AudioLane;
+        var bottom = ActualHeight - barSpace;
+        return p.Y >= top && p.Y <= bottom;
+    }
 
     private void DrawBar(DrawingContext dc, double width, double height, double barX, double barW)
     {
@@ -583,6 +960,9 @@ public sealed class FilmstripTimeline : FrameworkElement
         if (_drag == DragMode.None && !_scrubbing)
             return;
         var mode = _drag;
+        if (mode is DragMode.AudioCreate or DragMode.AudioMove or DragMode.AudioResizeStart
+            or DragMode.AudioResizeEnd)
+            CommitAudioDrag();
         _drag = DragMode.None;
         _scrubbing = false;
         _seekTimer.Stop();
@@ -756,7 +1136,11 @@ public sealed class FilmstripTimeline : FrameworkElement
 
     private static double Snap(double v) => Math.Round(v) + 0.5;
 
-    private enum DragMode { None, Seek, Pan }
+    private enum DragMode
+    {
+        None, Seek, Pan,
+        AudioCreate, AudioMove, AudioResizeStart, AudioResizeEnd
+    }
 
     private static readonly Typeface Consolas = new("Consolas");
     private static readonly Brush RulerBg = Freeze(new SolidColorBrush(Color.FromRgb(0x10, 0x15, 0x1C)));
@@ -779,6 +1163,23 @@ public sealed class FilmstripTimeline : FrameworkElement
     private static readonly Pen HoverPen = FreezePen(new Pen(HoverBrush, 1));
     private static readonly Pen FramePen = FreezePen(new Pen(FrameLine, 1));
     private static readonly Pen TickPen = FreezePen(new Pen(TickBrush, 1));
+    private static readonly Brush AudioLaneBg = Freeze(new SolidColorBrush(Color.FromRgb(0x14, 0x2E, 0x2C)));
+    private static readonly Brush AudioLabelBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x6E, 0xE0, 0xC8)));
+    private static readonly Brush AudioLabelBg = Freeze(new SolidColorBrush(Color.FromArgb(180, 0x10, 0x20, 0x1E)));
+    private static readonly Brush AudioHintBrush = Freeze(new SolidColorBrush(Color.FromRgb(0xA8, 0xE0, 0xD4)));
+    private static readonly Pen AudioLaneEdge = FreezePen(new Pen(
+        Freeze(new SolidColorBrush(Color.FromRgb(0x3D, 0xB8, 0xA0))), 1.5));
+    private static readonly Brush WaveFill = Freeze(new SolidColorBrush(Color.FromArgb(200, 0x3D, 0xC4, 0xA8)));
+    private static readonly Pen WaveCenterPen = FreezePen(new Pen(
+        Freeze(new SolidColorBrush(Color.FromArgb(70, 0x6E, 0xE0, 0xC8))), 1));
+    private static readonly Brush MuteFill = Freeze(new SolidColorBrush(Color.FromArgb(110, 0x2E, 0xC4, 0xA8)));
+    private static readonly Brush BeepFill = Freeze(new SolidColorBrush(Color.FromArgb(130, 0xE8, 0xA8, 0x38)));
+    private static readonly Brush HandleFill = Freeze(new SolidColorBrush(Color.FromArgb(220, 255, 255, 255)));
+    private static readonly Pen MutePen = FreezePen(new Pen(
+        Freeze(new SolidColorBrush(Color.FromRgb(0x6E, 0xE0, 0xC8))), 1));
+    private static readonly Pen BeepPen = FreezePen(new Pen(
+        Freeze(new SolidColorBrush(Color.FromRgb(0xE8, 0xA8, 0x38))), 1));
+    private static readonly Pen SelectedAudioPen = FreezePen(new Pen(Brushes.White, 1.5));
 
     private static SolidColorBrush Freeze(SolidColorBrush brush)
     {

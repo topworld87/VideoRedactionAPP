@@ -16,8 +16,11 @@ namespace VideoBlackout.Wpf;
 public partial class MainWindow : Window
 {
     private readonly NativeEngine _engine = new();
+    private readonly PreviewAudio _previewAudio = new();
     private readonly ObservableCollection<TrackRow> _tracks = new();
     private readonly ObservableCollection<FileRow> _files = new();
+    private readonly ObservableCollection<AudioRangeMark> _audioRanges = new();
+    private int _localAudioId = 1;
     private readonly ICollectionView _trackView;
     private readonly CollectionViewSource _maskSource = new();
     private bool _playing;
@@ -76,6 +79,8 @@ public partial class MainWindow : Window
                 Canvas.SetVideoSize(w, h);
                 UpdateTime(0);
                 RuntimeStatus.Text = _engine.RuntimeStatus();
+                if (!string.IsNullOrEmpty(path))
+                    _previewAudio.Open(path, _fps);
             });
         };
         _engine.ErrorOccurred += msg => Dispatcher.BeginInvoke(() =>
@@ -84,6 +89,7 @@ public partial class MainWindow : Window
         {
             _playing = false;
             PlayBtn.Content = "▶";
+            _previewAudio.Pause();
         });
         _engine.ExportProgress += (pct, status) => Dispatcher.BeginInvoke(() =>
             _exportDlg?.SetProgress(pct, status));
@@ -92,12 +98,18 @@ public partial class MainWindow : Window
         Timeline.SeekRequested += OnTimelineSeek;
         Timeline.PositionChanged += OnTimelinePosition;
         Timeline.ScrubStarted += OnTimelineScrubStarted;
+        Timeline.BindAudioRanges(_audioRanges);
+        Timeline.AudioRangeCreated += OnAudioRangeCreated;
+        Timeline.AudioRangeChanged += OnAudioRangeChanged;
+        Timeline.AudioRangeSelected += OnAudioRangeSelected;
+        Timeline.AudioRangeDeleteRequested += id => RemoveAudioRange(id);
 
         Closed += (_, _) =>
         {
             _signIn?.Cancel();
             CloseExportProgressDialog();
             Timeline.Shutdown();
+            _previewAudio.Dispose();
             _engine.Dispose();
         };
         ApplyLocaleChrome();
@@ -171,6 +183,15 @@ public partial class MainWindow : Window
             StepTo(Math.Max(0, _frameCount - 1));
             e.Handled = true;
         }
+        else if (e.Key == Key.Delete)
+        {
+            var id = Timeline.SelectedAudioId;
+            if (id > 0)
+            {
+                RemoveAudioRange(id);
+                e.Handled = true;
+            }
+        }
     }
 
     private void StepFrame(int direction, bool bySecond)
@@ -191,6 +212,8 @@ public partial class MainWindow : Window
         Timeline.SetPosition(next, follow: true, loadDetail: true);
         UpdateTime(next);
         _engine.Seek(next);
+        _previewAudio.SeekFrame(next);
+        SyncPreviewRedaction(next);
     }
 
     private void OnDumpDetectDebug(object sender, RoutedEventArgs e)
@@ -260,6 +283,7 @@ public partial class MainWindow : Window
             _currentFrame = index;
             Timeline.SetPosition(index, _playing);
             UpdateTime(index);
+            SyncPreviewRedaction(index);
         });
     }
 
@@ -269,6 +293,12 @@ public partial class MainWindow : Window
         var total = FilmstripTimeline.FormatTimecode(Math.Max(0, _frameCount), _fps);
         TimeCurrent.Text = cur;
         TimeTotal.Text = total;
+    }
+
+    private void SyncPreviewRedaction(long frame)
+    {
+        var sec = frame / Math.Max(0.1, _fps);
+        _previewAudio.ApplyRedactionAt(sec, _audioRanges);
     }
 
     private void ApplyTracks(NativeEngine.TrackC[] tracks)
@@ -325,6 +355,7 @@ public partial class MainWindow : Window
         _playing = false;
         PlayBtn.Content = "▶";
         _pendingOpenPath = path;
+        _previewAudio.Stop();
         if (!_engine.Open(path))
         {
             if (!quiet)
@@ -333,6 +364,7 @@ public partial class MainWindow : Window
         }
         _openedPath = path;
         _tracks.Clear();
+        ClearAudioRangesUi();
         _engine.ClearGallery();
         RuntimeStatus.Text = _engine.RuntimeStatus();
         _engine.SetFacePolicy(_reverse ? 1 : 0);
@@ -349,7 +381,9 @@ public partial class MainWindow : Window
         _engine.Pause();
         _playing = false;
         PlayBtn.Content = "▶";
+        _previewAudio.Stop();
         _tracks.Clear();
+        ClearAudioRangesUi();
         Canvas.Clear();
         Timeline.SetVideo(null, _fps, 0);
         UpdateTime(0);
@@ -362,9 +396,126 @@ public partial class MainWindow : Window
     {
         var ready = !string.IsNullOrEmpty(_openedPath);
         PlayBtn.IsEnabled = ready;
+        PreviewMuteBtn.IsEnabled = ready;
         Timeline.IsEnabled = ready;
+        AudioMuteBtn.IsEnabled = ready;
+        AudioBeepBtn.IsEnabled = ready;
+        AudioDeleteBtn.IsEnabled = ready && Timeline.SelectedAudioId > 0;
         TimeCurrent.Opacity = ready ? 1 : 0.35;
         TimeTotal.Opacity = ready ? 1 : 0.35;
+    }
+
+    private void ClearAudioRangesUi()
+    {
+        _audioRanges.Clear();
+        _localAudioId = 1;
+        _engine.ClearAudioRanges();
+        Timeline.ClearAudioSelection();
+        AudioDeleteBtn.IsEnabled = false;
+    }
+
+    private void OnAudioMute(object sender, RoutedEventArgs e)
+    {
+        AudioMuteBtn.IsChecked = true;
+        AudioBeepBtn.IsChecked = false;
+        Timeline.NewRangeEffect = 0;
+        ApplyEffectToSelected(0);
+    }
+
+    private void OnAudioBeep(object sender, RoutedEventArgs e)
+    {
+        AudioBeepBtn.IsChecked = true;
+        AudioMuteBtn.IsChecked = false;
+        Timeline.NewRangeEffect = 1;
+        ApplyEffectToSelected(1);
+    }
+
+    private void ApplyEffectToSelected(int effect)
+    {
+        var id = Timeline.SelectedAudioId;
+        var mark = _audioRanges.FirstOrDefault(r => r.Id == id);
+        if (mark == null)
+            return;
+        mark.Effect = effect;
+        _engine.UpdateAudioRange(mark.Id, mark.StartSec, mark.EndSec, effect);
+        SyncPreviewRedaction(_currentFrame);
+    }
+
+    private void OnAudioDelete(object sender, RoutedEventArgs e)
+    {
+        var id = Timeline.SelectedAudioId;
+        if (id > 0)
+            RemoveAudioRange(id);
+    }
+
+    private void OnAudioRangeCreated(double startSec, double endSec, int effect)
+    {
+        var id = _engine.AddAudioRange(startSec, endSec, effect);
+        if (id <= 0)
+            id = _localAudioId++;
+        var mark = new AudioRangeMark
+        {
+            Id = id,
+            StartSec = startSec,
+            EndSec = endSec,
+            Effect = effect,
+            Selected = true
+        };
+        foreach (var r in _audioRanges)
+            r.Selected = false;
+        _audioRanges.Add(mark);
+        Timeline.SetSelectedAudio(id);
+        AudioDeleteBtn.IsEnabled = true;
+        SyncPreviewRedaction(_currentFrame);
+    }
+
+    private void OnAudioRangeChanged(int id, double startSec, double endSec)
+    {
+        var mark = _audioRanges.FirstOrDefault(r => r.Id == id);
+        if (mark == null)
+            return;
+        mark.StartSec = startSec;
+        mark.EndSec = endSec;
+        _engine.UpdateAudioRange(id, startSec, endSec, mark.Effect);
+        SyncPreviewRedaction(_currentFrame);
+    }
+
+    private void OnAudioRangeSelected(int id)
+    {
+        foreach (var r in _audioRanges)
+            r.Selected = r.Id == id;
+        Timeline.SetSelectedAudio(id);
+        AudioDeleteBtn.IsEnabled = !string.IsNullOrEmpty(_openedPath) && id > 0;
+        if (id <= 0)
+            return;
+        var mark = _audioRanges.FirstOrDefault(r => r.Id == id);
+        if (mark == null)
+            return;
+        if (mark.Effect == 1)
+        {
+            AudioBeepBtn.IsChecked = true;
+            AudioMuteBtn.IsChecked = false;
+            Timeline.NewRangeEffect = 1;
+        }
+        else
+        {
+            AudioMuteBtn.IsChecked = true;
+            AudioBeepBtn.IsChecked = false;
+            Timeline.NewRangeEffect = 0;
+        }
+    }
+
+    private void RemoveAudioRange(int id)
+    {
+        if (id <= 0)
+            return;
+        _engine.RemoveAudioRange(id);
+        var mark = _audioRanges.FirstOrDefault(r => r.Id == id);
+        if (mark != null)
+            _audioRanges.Remove(mark);
+        Timeline.ClearAudioSelection();
+        AudioDeleteBtn.IsEnabled = false;
+        SyncPreviewRedaction(_currentFrame);
     }
 
     private void ScheduleOpen(string path)
@@ -616,6 +767,7 @@ public partial class MainWindow : Window
         _batchRunning = true;
         RefreshProcessUi();
         _engine.Pause();
+        _previewAudio.Pause();
         _playing = false;
         PlayBtn.Content = "▶";
         CloseExportProgressDialog();
@@ -689,6 +841,7 @@ public partial class MainWindow : Window
             return;
         }
         _engine.Pause();
+        _previewAudio.Pause();
         _playing = false;
         PlayBtn.Content = "▶";
         if (!_engine.Export(dest, _license.Current.Watermark))
@@ -762,6 +915,9 @@ public partial class MainWindow : Window
 
     private void OnExportFinished(bool ok, string path)
     {
+        if (ok && !string.IsNullOrEmpty(path) && File.Exists(path))
+            ok = FinishAudioOnExport(path, out path);
+
         var cancelled = !ok && path.Contains("cancel", StringComparison.OrdinalIgnoreCase);
         if (_batch != null)
         {
@@ -814,6 +970,59 @@ public partial class MainWindow : Window
             AppDialog.Show(this, L.T("msgProcess"), cancelled ? L.T("msgCancelled") : path);
     }
 
+    /// <summary>
+    /// When the core DLL has no audio API yet, burn mute/beep ranges with ffmpeg after export.
+    /// </summary>
+    private bool FinishAudioOnExport(string outputPath, out string pathOrError)
+    {
+        pathOrError = outputPath;
+        if (_audioRanges.Count == 0 || string.IsNullOrEmpty(_openedPath))
+            return true;
+        if (_engine.AudioApiAvailable)
+            return true;
+
+        var ffmpeg = FfmpegAudioRemux.FindFfmpeg();
+        if (ffmpeg == null)
+        {
+            pathOrError = L.T("msgAudioFfmpegMissing");
+            return false;
+        }
+
+        var temp = outputPath + ".aud.tmp.mp4";
+        try
+        {
+            if (File.Exists(temp))
+                File.Delete(temp);
+            if (!FfmpegAudioRemux.Remux(ffmpeg, _openedPath, outputPath, temp, _audioRanges.ToList(),
+                    out var err))
+            {
+                pathOrError = string.IsNullOrWhiteSpace(err) ? L.T("msgAudioRemuxFail") : err;
+                return false;
+            }
+            File.Delete(outputPath);
+            File.Move(temp, outputPath);
+            pathOrError = outputPath;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            pathOrError = ex.Message;
+            return false;
+        }
+        finally
+        {
+            try
+            {
+                if (File.Exists(temp))
+                    File.Delete(temp);
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+    }
+
     private void OnPlayPause(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrEmpty(_openedPath))
@@ -821,28 +1030,44 @@ public partial class MainWindow : Window
         if (_playing)
         {
             _engine.Pause();
+            _previewAudio.Pause();
             _playing = false;
             PlayBtn.Content = "▶";
             Timeline.SetPosition(_currentFrame, follow: false, loadDetail: true);
         }
         else
         {
+            _previewAudio.PlayFromFrame(_currentFrame);
             _engine.Play();
             _playing = true;
             PlayBtn.Content = "❚❚";
+            SyncPreviewRedaction(_currentFrame);
         }
+    }
+
+    private void OnPreviewMute(object sender, RoutedEventArgs e)
+    {
+        var muted = PreviewMuteBtn.IsChecked == true;
+        _previewAudio.IsMuted = muted;
+        // Speaker / Mute glyphs (Segoe MDL2)
+        PreviewMuteBtn.Content = muted ? "\uE74F" : "\uE767";
+        SyncPreviewRedaction(_currentFrame);
     }
 
     private void OnTimelineSeek(long frame)
     {
         _currentFrame = Math.Clamp(frame, 0, Math.Max(0, _frameCount - 1));
         _engine.Seek(_currentFrame);
+        _previewAudio.SeekFrame(_currentFrame);
+        SyncPreviewRedaction(_currentFrame);
     }
 
     private void OnTimelinePosition(long frame)
     {
         _currentFrame = frame;
         UpdateTime(frame);
+        if (!_playing)
+            SyncPreviewRedaction(frame);
     }
 
     private void OnTimelineScrubStarted()
@@ -850,6 +1075,7 @@ public partial class MainWindow : Window
         if (!_playing)
             return;
         _engine.Pause();
+        _previewAudio.Pause();
         _playing = false;
         PlayBtn.Content = "▶";
     }
@@ -1324,8 +1550,11 @@ public partial class MainWindow : Window
             row.NotifyLocale();
         foreach (var row in _tracks)
             row.NotifyLocale();
+        foreach (var row in _audioRanges)
+            row.RefreshLocale();
         Canvas.ApplyLocale();
         ApplyPreviewChrome();
+        Timeline.InvalidateVisual();
     }
 
     private void OnPreviewMaximize(object sender, RoutedEventArgs e) =>

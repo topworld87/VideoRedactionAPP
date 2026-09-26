@@ -52,6 +52,9 @@ public partial class AccountWindow : Window
             {
                 try { await _license.RefreshOnlineAsync(_signIn.Token); }
                 catch (OperationCanceledException) { /* window closed */ }
+                if (IsLoaded)
+                    Close();
+                return;
             }
         }
         catch (OperationCanceledException)
@@ -71,8 +74,7 @@ public partial class AccountWindow : Window
         if (!AppDialog.Confirm(this, L.T("dlgSignOut"), L.T("msgSignOutBody"), ok: L.T("dlgSignOut")))
             return;
         _license.SignOut();
-        StatusText.Text = L.T("accountSignedOut");
-        Refresh();
+        Close();
     }
 
     private void OnUpgrade(object sender, RoutedEventArgs e) => _license.OpenPricing();

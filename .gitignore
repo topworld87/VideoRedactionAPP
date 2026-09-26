@@ -22,3 +22,10 @@ msix/
 打包.bat
 提交商店文案.bat
 编译.bat
+
+# OpenCV debug symbols (SDK keeps Release/Debug DLLs under opencv/bin for local builds)
+opencv/**/*.pdb
+
+# Optional FFmpeg zip / extract scratch (shipped copy is tools/ffmpeg/ffmpeg.exe)
+tools/ffmpeg-essentials.zip
+tools/ffmpeg_extract/
